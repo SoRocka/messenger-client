@@ -16,71 +16,70 @@ public class ChatWindow extends JFrame {
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
+    private int correspondentId; // идентификатор корреспондента
+    private ObjectOutputStream objectOutputStream; // поток для отправки объектов
 
-    public ChatWindow(String username) {
+
+    public ChatWindow(String username, int correspondentId, ObjectOutputStream objectOutputStream) {
         this.username = username;
-
-        // Настраиваем основные параметры окна
+        this.correspondentId = correspondentId;
+        this.objectOutputStream = objectOutputStream;
+    
+        // Устанавливаем основные параметры
         setTitle("Chat - " + username);
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null); // Центрируем окно
-
-        // Создаем элементы интерфейса
+    
+        // Элементы интерфейса
         chatArea = new JTextArea();
-        chatArea.setEditable(false); // Запретить редактирование области чата
+        chatArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(chatArea);
-
+    
         messageField = new JTextField();
         sendButton = new JButton("Send");
-
+    
         // Добавляем обработчик для отправки сообщений
-        sendButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                sendMessage();
+        sendButton.addActionListener(e -> {
+            String message = messageField.getText();
+            if (!message.isEmpty()) {
+                sendMessage(message);  // Отправляем сообщение
+                messageField.setText("");
             }
         });
-
-        // Создаем панель для ввода сообщения
-        JPanel inputPanel = new JPanel(new BorderLayout());
-        inputPanel.add(messageField, BorderLayout.CENTER);
-        inputPanel.add(sendButton, BorderLayout.EAST);
-
-        // Добавляем все элементы в окно
+    
+        // Добавляем элементы на форму
         add(scrollPane, BorderLayout.CENTER);
-        add(inputPanel, BorderLayout.SOUTH);
-
-        // Подключаемся к серверу
-        connectToServer();
-
-        // Делаем окно видимым
+        add(messageField, BorderLayout.SOUTH);
+        add(sendButton, BorderLayout.EAST);
+    
+        // Отображаем окно чатов
         setVisible(true);
-
-        // Начинаем поток для получения сообщений
-        new Thread(new MessageReceiver()).start();
-    }
+    }    
 
     // Метод для подключения к серверу
     private void connectToServer() {
         try {
             socket = new Socket("localhost", 10001); // Подключение к серверу на порту 10001
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream(), true);
+            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream())); // Получение сообщений от сервера
             chatArea.append("Connected to server\n");
+
+            // Запускаем поток для получения сообщений
+            new Thread(new MessageReceiver()).start();
         } catch (IOException e) {
             e.printStackTrace();
             chatArea.append("Failed to connect to server\n");
         }
     }
 
-    // Метод для отправки сообщений
-    private void sendMessage() {
-        String message = messageField.getText();
-        if (!message.isEmpty()) {
-            chatArea.append(username + ": " + message + "\n");
-            out.println(message); // Отправляем сообщение на сервер
-            messageField.setText(""); // Очищаем поле ввода
+    // Метод отправки сообщения на сервер
+    private void sendMessage(String message) {
+        try {
+            objectOutputStream.writeObject(new MessagePacket(correspondentId, message));  // Отправка сообщения
+            objectOutputStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -98,9 +97,5 @@ public class ChatWindow extends JFrame {
                 chatArea.append("Connection lost\n");
             }
         }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new ChatWindow("testuser"));
-    }
+    }    
 }

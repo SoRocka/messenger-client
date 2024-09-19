@@ -4,7 +4,6 @@ com/Packet.class
 com/Dispatcher.class
 com/MessagePacket.class
 com/ChatWindow$MessageReceiver.class
-com/ChatWindow$1.class
 com/MessengerServer.class
 com/HiPacket.class
 com/LoginClientWindow$1.class

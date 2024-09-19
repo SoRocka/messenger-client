@@ -9,12 +9,12 @@ public abstract class Packet implements Serializable {
 
     // Карта для сопоставления типов пакетов с их конструкторами
     private static Map<String, Supplier<Packet>> typeMap = Map.of(
-        EchoPacket.type, EchoPacket::new,
-        HiPacket.type, HiPacket::new,
-        ByePacket.type, ByePacket::new,
-        MessagePacket.type, MessagePacket::new,
-        ListPacket.type, ListPacket::new,
-        LoginPacket.type, LoginPacket::new
+        EchoPacket.type, () -> new EchoPacket(),
+        HiPacket.type, () -> new HiPacket(),
+        ByePacket.type, () -> new ByePacket(),
+        MessagePacket.type, () -> new MessagePacket(0, ""), // Предположим, что нужно передать параметры
+        ListPacket.type, () -> new ListPacket(),
+        LoginPacket.type, () -> new LoginPacket()
     );
 
     // Получение типа пакета

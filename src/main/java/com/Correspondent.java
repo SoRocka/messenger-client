@@ -36,4 +36,8 @@ public class Correspondent {
     public boolean checkPassword(String password) {
         return this.password.equals(password);
     }
+
+    public int getId() {
+        return id;
+    }
 }

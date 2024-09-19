@@ -56,7 +56,6 @@ public class LoginClientWindow extends JFrame {
         setVisible(true);
     }
 
-
     private void handleLogin() {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
@@ -74,19 +73,22 @@ public class LoginClientWindow extends JFrame {
     
             if (response instanceof EchoPacket) {
                 EchoPacket echoPacket = (EchoPacket) response;
-                if ("Login successful!".equals(echoPacket.text)) {
+    
+                // Проверяем успешный ли логин
+                if (echoPacket.getText().equals("Login successful!")) {
                     JOptionPane.showMessageDialog(this, "Login successful!");
-                    new ChatWindow(username);  // Открываем чат
+                
+                    // Открываем окно чата
+                    new ChatWindow(username, echoPacket.getCorrespondentId(), objectOutputStream);
                     dispose();  // Закрываем окно входа
                 } else {
                     JOptionPane.showMessageDialog(this, "Invalid username or password.");
-                }
+                }                
             }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
-    
     
 
     private void sendPacket(Packet packet) {
@@ -98,7 +100,6 @@ public class LoginClientWindow extends JFrame {
             e.printStackTrace();
         }
     }
-    
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new LoginClientWindow());

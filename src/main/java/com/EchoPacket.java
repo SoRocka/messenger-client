@@ -2,19 +2,34 @@ package com;
 
 import java.io.BufferedReader;
 import java.io.PrintWriter;
-import java.io.Serializable;
 
-public class EchoPacket extends Packet implements Serializable {
-    private static final long serialVersionUID = 1L;  // Добавляем уникальный идентификатор версии класса
-
+public class EchoPacket extends Packet {
     public static final String type = "ECHO";
-    public String text;
+    public String message;  // Используем message вместо text
+    public int correspondentId;
 
-    public EchoPacket(String text) {
-        this.text = text;
+    // Конструктор с двумя параметрами
+    public EchoPacket(String message, int correspondentId) {
+        this.message = message;  // Инициализация message
+        this.correspondentId = correspondentId;
     }
 
-    public EchoPacket() {
+    // Конструктор с одним параметром
+    public EchoPacket(String message) {
+        this.message = message;  // Инициализация message
+    }
+
+    // Пустой конструктор
+    public EchoPacket() {}
+
+    // Метод для получения текстового сообщения
+    public String getText() {
+        return message;  // Возвращаем message
+    }
+
+    // Метод для получения идентификатора корреспондента
+    public int getCorrespondentId() {
+        return correspondentId;
     }
 
     @Override
@@ -24,12 +39,11 @@ public class EchoPacket extends Packet implements Serializable {
 
     @Override
     public void writeBody(PrintWriter writer) throws Exception {
-        writer.println(text);
-        writer.println();
+        writer.println(message);  // Записываем message вместо text
     }
 
     @Override
     public void readBody(BufferedReader reader) throws Exception {
-        text = readText(reader);  // Не забываем этот метод для чтения текста
+        message = reader.readLine();  // Читаем message вместо text
     }
 }
