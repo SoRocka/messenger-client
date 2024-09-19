@@ -2,8 +2,9 @@ package com;
 
 import java.io.BufferedReader;
 import java.io.PrintWriter;
+import java.io.Serializable;  // Добавляем Serializable
 
-public class LoginPacket extends Packet {
+public class LoginPacket extends Packet implements Serializable {  // Реализуем Serializable
     public static final String type = "LOGIN";
 
     private String username;

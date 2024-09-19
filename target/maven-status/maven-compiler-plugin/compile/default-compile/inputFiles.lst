@@ -1,8 +1,9 @@
 /home/soroka/Documents/repos/messenger-client/src/main/java/com/MessagePacket.java
+/home/soroka/Documents/repos/messenger-client/src/main/java/com/LoginPacket.java
+/home/soroka/Documents/repos/messenger-client/src/main/java/com/LoginClientWindow.java
 /home/soroka/Documents/repos/messenger-client/src/main/java/com/Session.java
 /home/soroka/Documents/repos/messenger-client/src/main/java/com/ListPacket.java
 /home/soroka/Documents/repos/messenger-client/src/main/java/com/Packet.java
-/home/soroka/Documents/repos/messenger-client/src/main/java/com/LoginWindow.java
 /home/soroka/Documents/repos/messenger-client/src/main/java/com/ChatWindow.java
 /home/soroka/Documents/repos/messenger-client/src/main/java/com/ByePacket.java
 /home/soroka/Documents/repos/messenger-client/src/main/java/com/EchoPacket.java

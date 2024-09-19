@@ -12,14 +12,14 @@ public class LoginClientWindow extends JFrame {
     private JTextField usernameField;
     private JPasswordField passwordField;
     private Socket socket;
-    private PrintWriter writer;
+    private ObjectOutputStream writer;  // Используем ObjectOutputStream
     private BufferedReader reader;
 
     public LoginClientWindow() {
         // Настраиваем соединение с сервером
         try {
             socket = new Socket("localhost", 10001);  // Подключаемся к серверу
-            writer = new PrintWriter(socket.getOutputStream(), true);
+            writer = new ObjectOutputStream(socket.getOutputStream());  // Инициализируем writer
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         } catch (IOException e) {
             e.printStackTrace();
@@ -59,15 +59,17 @@ public class LoginClientWindow extends JFrame {
     private void handleLogin() {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
-
+    
         // Отправляем логин на сервер
         try {
-            writer.println("LOGIN");
-            writer.println(username);
-            writer.println(password);
-            writer.println();
-
+            System.out.println("Sending login packet to server...");  // Отладочное сообщение
+            // Создаем объект LoginPacket и отправляем его на сервер
+            LoginPacket loginPacket = new LoginPacket(username, password);
+            sendPacket(loginPacket);  // Отправляем пакет на сервер
+    
+            System.out.println("Waiting for response from server...");  // Отладочное сообщение
             String response = reader.readLine();  // Читаем ответ от сервера
+            System.out.println("Received response: " + response);  // Отладочное сообщение
             if ("Login successful!".equals(response)) {
                 JOptionPane.showMessageDialog(this, "Login successful!");
                 new ChatWindow(username);  // Открываем чат, передаем socket
@@ -78,5 +80,20 @@ public class LoginClientWindow extends JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    
+
+    private void sendPacket(Packet packet) {
+        // Метод для отправки пакета на сервер
+        try {
+            writer.writeObject(packet);  // Отправляем объект на сервер
+            writer.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new LoginClientWindow());
     }
 }

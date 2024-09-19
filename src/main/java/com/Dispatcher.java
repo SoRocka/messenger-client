@@ -29,7 +29,8 @@ public class Dispatcher implements Runnable {
                 }
 
                 case HiPacket hiP -> {
-                    var correspondent = Correspondent.findCorrespondent(String.valueOf(hiP.login));  
+                    // Находим корреспондента по логину
+                    var correspondent = Correspondent.findCorrespondent(hiP.login);  
                     if (correspondent == null) {
                         session.close();
                         return;
@@ -44,9 +45,10 @@ public class Dispatcher implements Runnable {
                         System.out.println("Non-authorized");
                         return;
                     }
-                    var correspondent = Correspondent.findCorrespondent(mP.correspondentId);
-                    mP.correspondentId = session.correspondent.id;
-                    if (correspondent.activeSession != null) {
+                    // Ищем корреспондента по id из пакета сообщения
+                    var correspondent = Correspondent.findCorrespondent(String.valueOf(mP.correspondentId));
+                    mP.correspondentId = session.correspondent.id; // Устанавливаем id отправителя
+                    if (correspondent != null && correspondent.activeSession != null) {
                         System.out.println("Sending message to correspondent, id: " + correspondent.id);
                         correspondent.activeSession.send(mP);
                     } else {
@@ -64,12 +66,15 @@ public class Dispatcher implements Runnable {
 
                 // Обработка LoginPacket
                 case LoginPacket loginP -> {
-                    String login = loginP.getUsername();  // Проверяем логин
-                    String password = loginP.getPassword(); // Проверяем пароль
-
+                    String login = loginP.getUsername();  // Получаем логин
+                    String password = loginP.getPassword(); // Получаем пароль
+                
+                    System.out.println("Received login: " + login);
+                    System.out.println("Received password: " + password);
+                
                     // Проверяем, существует ли пользователь с таким логином
                     Correspondent correspondent = Correspondent.findCorrespondent(login);
-
+                
                     // Проверяем пароль
                     if (correspondent != null && correspondent.checkPassword(password)) {
                         correspondent.activeSession = session;
@@ -77,10 +82,11 @@ public class Dispatcher implements Runnable {
                         System.out.println("Login successful for: " + login);
                         session.send(new EchoPacket("Login successful!"));
                     } else {
+                        System.out.println("Login failed for: " + login);
                         session.send(new EchoPacket("Login failed!"));
                         session.close();
                     }
-                }
+                }                
 
                 default -> {
                     System.out.println("Unexpected packet type: " + p.getType());

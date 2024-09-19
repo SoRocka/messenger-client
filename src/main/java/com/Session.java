@@ -6,8 +6,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class Session extends Thread {
     private final Socket socket;
-    private BufferedReader reader;
-    private PrintWriter writer;
+    private ObjectInputStream objectInputStream;
+    private ObjectOutputStream objectOutputStream;
     private final LinkedBlockingQueue<Packet> toClientQueue = new LinkedBlockingQueue<>();
     private Thread writerThread;
 
@@ -21,7 +21,7 @@ public class Session extends Thread {
                 try {
                     var p = toClientQueue.take();
                     System.out.println("Sending message: " + p.getType());
-                    p.writePacket(writer);
+                    sendPacket(p);  // Отправляем пакет через ObjectOutputStream
                 } 
                 catch (InterruptedException x) {
                     break;
@@ -30,6 +30,17 @@ public class Session extends Thread {
         });
 
         writerThread.start();
+    }
+
+    // Отправляем пакет через ObjectOutputStream
+    private void sendPacket(Packet packet) {
+        try {
+            objectOutputStream.writeObject(packet);  // Отправляем пакет как объект
+            objectOutputStream.flush();
+        } catch (IOException e) {
+            System.out.println("Error sending packet: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public void send(Packet p) {
@@ -41,11 +52,9 @@ public class Session extends Thread {
             try (socket) {
                 System.out.println("Got incoming connection");
 
-                InputStream input = socket.getInputStream();
-                reader = new BufferedReader(new InputStreamReader(input));
-
-                OutputStream output = socket.getOutputStream();
-                writer = new PrintWriter(output, true);
+                // Создаем потоки для объектов
+                objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                objectInputStream = new ObjectInputStream(socket.getInputStream());
 
                 // Авторизация при первом соединении
                 if (!handleLogin()) {
@@ -55,7 +64,7 @@ public class Session extends Thread {
 
                 // Основной цикл обработки пакетов после успешной авторизации
                 for(;;) {
-                    var p = Packet.readPacket(reader);
+                    Packet p = (Packet) objectInputStream.readObject();  // Читаем объект пакета
 
                     if (p == null || p.getType().equals(ByePacket.type)) {
                         close();
@@ -63,19 +72,19 @@ public class Session extends Thread {
                     }
 
                     var e = new Event(this, p);
-                    Dispatcher.event(e);
+                    Dispatcher.event(e);  // Отправляем пакет на обработку
                 }
             }
-        } catch (IOException ex) {
+        } catch (IOException | ClassNotFoundException ex) {
             System.out.println("Session problem: " + ex.getMessage());
             ex.printStackTrace();
         }
     }
 
     // Метод для обработки логина
-    private boolean handleLogin() throws IOException {
+    private boolean handleLogin() throws IOException, ClassNotFoundException {
         // Ожидание получения пакета с логином
-        Packet loginPacket = Packet.readPacket(reader);
+        Packet loginPacket = (Packet) objectInputStream.readObject();  // Читаем объект
 
         if (loginPacket != null && loginPacket.getType().equals(LoginPacket.type)) {
             LoginPacket login = (LoginPacket) loginPacket;
@@ -87,10 +96,10 @@ public class Session extends Thread {
                 correspondent.activeSession = this;
 
                 // Отправляем ответ об успешной авторизации
-                writer.println("LOGIN SUCCESS");
+                sendPacket(new EchoPacket("Login successful!"));
                 return true;
             } else {
-                writer.println("LOGIN FAILURE");
+                sendPacket(new EchoPacket("Login failed!"));
                 return false;
             }
         }
@@ -99,6 +108,7 @@ public class Session extends Thread {
 
     public void close() {
         try {
+            System.out.println("Closing session for " + correspondent);
             if (correspondent != null) correspondent.activeSession = null;
             writerThread.interrupt();
             socket.close();
@@ -107,4 +117,5 @@ public class Session extends Thread {
             ex.printStackTrace();
         }
     }
+    
 }
