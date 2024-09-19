@@ -1,17 +1,17 @@
 package com;
 
+import com.formdev.flatlaf.FlatDarkLaf;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 public class ChatWindow extends JFrame {
 
-    private JTextArea chatArea;
+    private JTextPane chatArea;
     private JTextField messageField;
     private JButton sendButton;
     private JList<String> userList;
@@ -20,9 +20,9 @@ public class ChatWindow extends JFrame {
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
     
-    private Map<String, Integer> userIdMap = new HashMap<>();  // Карта для соответствия имен пользователей их ID
-    private int currentCorrespondentId;  // ID текущего корреспондента
-    private Map<Integer, ArrayList<String>> messagesMap = new HashMap<>();  // Карта для хранения сообщений для каждого корреспондента
+    private Map<String, Integer> userIdMap = new HashMap<>();
+    private int currentCorrespondentId;
+    private Map<Integer, ArrayList<String>> messagesMap = new HashMap<>();
 
     public ChatWindow(String username, int correspondentId, ObjectOutputStream objectOutputStream, ObjectInputStream objectInputStream, List<String> registeredUsers) {
         this.username = username;
@@ -30,33 +30,62 @@ public class ChatWindow extends JFrame {
         this.objectOutputStream = objectOutputStream;
         this.objectInputStream = objectInputStream;
 
+        // Применяем темную тему FlatLaf
+        FlatDarkLaf.setup();
+
         // Заполняем карту соответствий имен пользователей и их ID
         for (int i = 0; i < registeredUsers.size(); i++) {
-            userIdMap.put(registeredUsers.get(i), i + 1);  // Например, присваиваем ID начиная с 1
+            userIdMap.put(registeredUsers.get(i), i + 1);
         }
 
-        setTitle("Chat - " + username);
-        setSize(600, 400);
+        setTitle("Telegram - " + username);
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        chatArea = new JTextArea();
+        // Инициализация пользовательского интерфейса
+        initUI(registeredUsers);
+
+        // Запускаем поток для получения сообщений от сервера
+        new Thread(new MessageReceiver()).start();
+    }
+
+    private void initUI(List<String> registeredUsers) {
+        // Настройка панели чата
+        chatArea = new JTextPane();
         chatArea.setEditable(false);
+        chatArea.setBackground(new Color(32, 32, 32));
+        chatArea.setForeground(Color.WHITE);
+        chatArea.setFont(new Font("SansSerif", Font.PLAIN, 14));
         JScrollPane chatScrollPane = new JScrollPane(chatArea);
 
+        // Поле ввода сообщения
         messageField = new JTextField();
+        messageField.setBackground(new Color(48, 48, 48));
+        messageField.setForeground(Color.WHITE);
+        messageField.setCaretColor(Color.WHITE);
+
+        // Кнопка отправки сообщения
         sendButton = new JButton("Send");
+        sendButton.setBackground(new Color(98, 0, 238));
+        sendButton.setForeground(Color.WHITE);
+        sendButton.setFocusPainted(false);
 
         sendButton.addActionListener(e -> {
             String message = messageField.getText();
             if (!message.isEmpty()) {
                 sendMessage(message);
                 messageField.setText("");
-                // addMessageToChat(currentCorrespondentId, "You: " + message);
             }
         });
 
+        // Список пользователей
         userList = new JList<>(registeredUsers.toArray(new String[0]));
+        userList.setBackground(new Color(25, 25, 25));
+        userList.setForeground(Color.WHITE);
+        userList.setSelectionBackground(new Color(98, 0, 238));
+        userList.setSelectionForeground(Color.WHITE);
+
         userList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 String selectedUser = userList.getSelectedValue();
@@ -66,18 +95,23 @@ public class ChatWindow extends JFrame {
         });
 
         JScrollPane userScrollPane = new JScrollPane(userList);
-        userScrollPane.setPreferredSize(new Dimension(150, 0));
+        userScrollPane.setPreferredSize(new Dimension(200, 0));
 
+        // Панель с разделением
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, userScrollPane, chatScrollPane);
-        splitPane.setDividerLocation(150);
+        splitPane.setDividerLocation(200);
+        splitPane.setBackground(new Color(32, 32, 32));
+        splitPane.setBorder(null);
+
+        // Добавляем компоненты в окно
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(messageField, BorderLayout.CENTER);
+        bottomPanel.add(sendButton, BorderLayout.EAST);
+        bottomPanel.setBackground(new Color(32, 32, 32));
 
         add(splitPane, BorderLayout.CENTER);
-        add(messageField, BorderLayout.SOUTH);
-        add(sendButton, BorderLayout.EAST);
+        add(bottomPanel, BorderLayout.SOUTH);
         setVisible(true);
-
-        // Запускаем поток для получения сообщений от сервера
-        new Thread(new MessageReceiver()).start();
     }
 
     private void sendMessage(String message) {
@@ -85,7 +119,7 @@ public class ChatWindow extends JFrame {
             // Отправляем сообщение на сервер
             objectOutputStream.writeObject(new MessagePacket(currentCorrespondentId, message));
             objectOutputStream.flush();
-    
+
             // Добавляем сообщение с "You: " в локальный чат
             addMessageToChat(currentCorrespondentId, "You: " + message);
             
@@ -96,8 +130,7 @@ public class ChatWindow extends JFrame {
             e.printStackTrace();
         }
     }
-    
-    
+
     // Метод для добавления сообщения в чат
     private void addMessageToChat(int correspondentId, String message) {
         if (!messagesMap.containsKey(correspondentId)) {
@@ -112,8 +145,17 @@ public class ChatWindow extends JFrame {
         List<String> messages = messagesMap.get(correspondentId);
         if (messages != null) {
             for (String message : messages) {
-                chatArea.append(message + "\n");
+                appendToChat(message);
             }
+        }
+    }
+
+    // Метод для добавления сообщений в JTextPane
+    private void appendToChat(String message) {
+        try {
+            chatArea.getDocument().insertString(chatArea.getDocument().getLength(), message + "\n", null);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -126,11 +168,11 @@ public class ChatWindow extends JFrame {
                 while ((incomingMessage = objectInputStream.readObject()) != null) {
                     if (incomingMessage instanceof MessagePacket) {
                         MessagePacket messagePacket = (MessagePacket) incomingMessage;
-    
+
                         // Проверяем, что сообщение не дублируется
                         String receivedMessage = "Message from correspondent " + messagePacket.getCorrespondentId() + ": " + messagePacket.getMessage();
                         List<String> currentMessages = messagesMap.get(messagePacket.getCorrespondentId());
-    
+
                         // Если сообщение не было отправлено самим пользователем, добавляем его
                         if (currentMessages == null || !currentMessages.contains(receivedMessage)) {
                             addMessageToChat(messagePacket.getCorrespondentId(), receivedMessage);
@@ -144,14 +186,13 @@ public class ChatWindow extends JFrame {
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
-                chatArea.append("Connection lost\n");
+                chatArea.setText(chatArea.getText() + "\nConnection lost\n");
             }
         }
     }
-    
 
     // Метод для получения ID пользователя по имени
     private int getUserIdByName(String username) {
-        return userIdMap.getOrDefault(username, -1);  // Возвращаем -1, если пользователь не найден
+        return userIdMap.getOrDefault(username, -1);
     }
 }
