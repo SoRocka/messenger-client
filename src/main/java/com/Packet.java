@@ -10,7 +10,8 @@ public abstract class Packet {
         HiPacket.type, () -> { return new HiPacket(); },
         ByePacket.type, () -> { return new ByePacket(); },
         MessagePacket.type, () -> { return new MessagePacket(); },
-        ListPacket.type, () -> { return new ListPacket(); }
+        ListPacket.type, () -> { return new ListPacket(); },
+        LoginPacket.type, () -> { return new LoginPacket(); }
     );
 
     public abstract String getType();

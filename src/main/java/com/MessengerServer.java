@@ -1,12 +1,14 @@
 package com;
+
 import java.net.*;
 
 public class MessengerServer {
 
     public static void startServer() {
-        Correspondent.registerCorrespondent(new Correspondent(1, "user1"));
-        Correspondent.registerCorrespondent(new Correspondent(2, "user2"));
-        Correspondent.registerCorrespondent(new Correspondent(3, "user3"));
+        // Регистрация пользователей с паролями
+        Correspondent.registerCorrespondent(new Correspondent(1, "user1", "password1"));
+        Correspondent.registerCorrespondent(new Correspondent(2, "user2", "password2"));
+        Correspondent.registerCorrespondent(new Correspondent(3, "user3", "password3"));
 
         try (ServerSocket serverSocket = new ServerSocket(10001)) {
             new Thread(new Dispatcher()).start();

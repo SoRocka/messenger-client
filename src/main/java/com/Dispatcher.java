@@ -3,19 +3,18 @@ package com;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Dispatcher implements Runnable {
-     private static final LinkedBlockingQueue<Event> packetQueue = new LinkedBlockingQueue<>();
+    private static final LinkedBlockingQueue<Event> packetQueue = new LinkedBlockingQueue<>();
 
-     public static void event(Event e) {
+    public static void event(Event e) {
         packetQueue.add(e);
-     }
+    }
 
     public void run() {
-        for(;;) {
+        for (;;) {
             try {
                 var e = packetQueue.take();
                 processPacket(e.session, e.packet);
-            }
-            catch(InterruptedException x) {
+            } catch (InterruptedException x) {
                 break;
             }
         }
@@ -24,52 +23,72 @@ public class Dispatcher implements Runnable {
     private void processPacket(Session session, Packet p) {
         System.out.println("Processing packet: " + p.getType());
         try {
-        switch(p) {
-            case EchoPacket echoP -> {
-                session.send(p);
-            }
+            switch (p) {
+                case EchoPacket echoP -> {
+                    session.send(p);
+                }
 
-            case HiPacket hiP -> {
-                var correspondent = Correspondent.findCorrespondent(hiP.login);
-                if(correspondent == null) {
-                    session.close();
-                    return;
+                case HiPacket hiP -> {
+                    var correspondent = Correspondent.findCorrespondent(String.valueOf(hiP.login));  
+                    if (correspondent == null) {
+                        session.close();
+                        return;
+                    }
+                    session.correspondent = correspondent;
+                    correspondent.activeSession = session;
+                    System.out.println("Correspondent authorized, id: " + correspondent.id);
                 }
-                session.correspondent = correspondent;
-                correspondent.activeSession = session;
-                System.out.println("Correspondent authorized, id: " + correspondent.id);
-            }
 
-            case MessagePacket mP -> {
-                if(session.correspondent == null) {
-                    System.out.println("Non-authorized");
-                    return;
+                case MessagePacket mP -> {
+                    if (session.correspondent == null) {
+                        System.out.println("Non-authorized");
+                        return;
+                    }
+                    var correspondent = Correspondent.findCorrespondent(mP.correspondentId);
+                    mP.correspondentId = session.correspondent.id;
+                    if (correspondent.activeSession != null) {
+                        System.out.println("Sending message to correspondent, id: " + correspondent.id);
+                        correspondent.activeSession.send(mP);
+                    } else {
+                        System.out.println("Target correspondent not connected, id: " + correspondent.id);
+                    }
                 }
-                var correspondent = Correspondent.findCorrespondent(mP.correspondentId);
-                mP.correspondentId = session.correspondent.id;
-                if(correspondent.activeSession != null) {
-                    System.out.println("Sending message to correspondent, id: " + correspondent.id);
-                    correspondent.activeSession.send(mP);
-                } else {
-                    System.out.println("Target correspondent not conneacted, id: " + correspondent.id);
-                }
-            }
 
-            case ListPacket emptyListP -> {
-                var filledListP = new ListPacket();
-                for(var c : Correspondent.listAll()) {
-                    filledListP.addItem(c.id, c.login);
+                case ListPacket emptyListP -> {
+                    var filledListP = new ListPacket();
+                    for (var c : Correspondent.listAll()) {
+                        filledListP.addItem(c.id, c.login);
+                    }
+                    session.send(filledListP);
                 }
-                session.send(filledListP);
+
+                // Обработка LoginPacket
+                case LoginPacket loginP -> {
+                    String login = loginP.getUsername();  // Проверяем логин
+                    String password = loginP.getPassword(); // Проверяем пароль
+
+                    // Проверяем, существует ли пользователь с таким логином
+                    Correspondent correspondent = Correspondent.findCorrespondent(login);
+
+                    // Проверяем пароль
+                    if (correspondent != null && correspondent.checkPassword(password)) {
+                        correspondent.activeSession = session;
+                        session.correspondent = correspondent;
+                        System.out.println("Login successful for: " + login);
+                        session.send(new EchoPacket("Login successful!"));
+                    } else {
+                        session.send(new EchoPacket("Login failed!"));
+                        session.close();
+                    }
+                }
+
+                default -> {
+                    System.out.println("Unexpected packet type: " + p.getType());
+                }
             }
-            
-            default -> {
-                System.out.println("Unexpected packet type: " + p.getType());
-            }
-        }
-        } catch(Exception ex) {
-			System.out.println("Dispatcher problem: " + ex.getMessage());
-			ex.printStackTrace();
+        } catch (Exception ex) {
+            System.out.println("Dispatcher problem: " + ex.getMessage());
+            ex.printStackTrace();
         }
     }
 }

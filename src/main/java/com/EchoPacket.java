@@ -1,6 +1,5 @@
 package com;
 
-
 import java.io.BufferedReader;
 import java.io.PrintWriter;
 
@@ -8,6 +7,13 @@ public class EchoPacket extends Packet {
     public static final String type = "ECHO";
     
     public String text;
+
+    public EchoPacket(String text) {
+        this.text = text;
+    }
+
+    public EchoPacket() {
+    }
 
     public String getType() {
         return type;

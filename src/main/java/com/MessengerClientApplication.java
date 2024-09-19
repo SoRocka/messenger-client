@@ -8,6 +8,6 @@ public class MessengerClientApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(MessengerClientApplication.class, args);
-        MessengerServer.startServer(); // Запуск вашего сервера
+        MessengerServer.startServer();
     }
 }
