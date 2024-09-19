@@ -12,22 +12,22 @@ public class LoginClientWindow extends JFrame {
     private JTextField usernameField;
     private JPasswordField passwordField;
     private Socket socket;
-    private ObjectOutputStream writer;  // Используем ObjectOutputStream
-    private BufferedReader reader;
+    private ObjectInputStream objectInputStream;
+    private ObjectOutputStream objectOutputStream;
 
     public LoginClientWindow() {
         // Настраиваем соединение с сервером
         try {
             socket = new Socket("localhost", 10001);  // Подключаемся к серверу
-            writer = new ObjectOutputStream(socket.getOutputStream());  // Инициализируем writer
-            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+            objectInputStream = new ObjectInputStream(socket.getInputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         // Устанавливаем параметры окна
         setTitle("Login");
-        setSize(300, 150);
+        setSize(800, 350);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -56,42 +56,49 @@ public class LoginClientWindow extends JFrame {
         setVisible(true);
     }
 
+
     private void handleLogin() {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
     
         // Отправляем логин на сервер
         try {
-            System.out.println("Sending login packet to server...");  // Отладочное сообщение
+            System.out.println("Sending login packet to server...");
+    
             // Создаем объект LoginPacket и отправляем его на сервер
             LoginPacket loginPacket = new LoginPacket(username, password);
             sendPacket(loginPacket);  // Отправляем пакет на сервер
     
-            System.out.println("Waiting for response from server...");  // Отладочное сообщение
-            String response = reader.readLine();  // Читаем ответ от сервера
-            System.out.println("Received response: " + response);  // Отладочное сообщение
-            if ("Login successful!".equals(response)) {
-                JOptionPane.showMessageDialog(this, "Login successful!");
-                new ChatWindow(username);  // Открываем чат, передаем socket
-                dispose();  // Закрываем окно входа
-            } else {
-                JOptionPane.showMessageDialog(this, "Invalid username or password.");
+            // Получаем ответ от сервера через ObjectInputStream
+            Packet response = (Packet) objectInputStream.readObject();  // Читаем объект пакета ответа
+    
+            if (response instanceof EchoPacket) {
+                EchoPacket echoPacket = (EchoPacket) response;
+                if ("Login successful!".equals(echoPacket.text)) {
+                    JOptionPane.showMessageDialog(this, "Login successful!");
+                    new ChatWindow(username);  // Открываем чат
+                    dispose();  // Закрываем окно входа
+                } else {
+                    JOptionPane.showMessageDialog(this, "Invalid username or password.");
+                }
             }
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    
+
+    private void sendPacket(Packet packet) {
+        // Метод для отправки пакета на сервер через ObjectOutputStream
+        try {
+            objectOutputStream.writeObject(packet);  // Отправляем объект пакета
+            objectOutputStream.flush();              // Завершаем отправку
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
     
-
-    private void sendPacket(Packet packet) {
-        // Метод для отправки пакета на сервер
-        try {
-            writer.writeObject(packet);  // Отправляем объект на сервер
-            writer.flush();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new LoginClientWindow());

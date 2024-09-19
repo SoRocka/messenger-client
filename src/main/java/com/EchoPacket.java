@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 public class EchoPacket extends Packet implements Serializable {
     private static final long serialVersionUID = 1L;  // Добавляем уникальный идентификатор версии класса
-    
+
     public static final String type = "ECHO";
     public String text;
 
@@ -30,6 +30,6 @@ public class EchoPacket extends Packet implements Serializable {
 
     @Override
     public void readBody(BufferedReader reader) throws Exception {
-        text = readText(reader);
+        text = readText(reader);  // Не забываем этот метод для чтения текста
     }
 }
