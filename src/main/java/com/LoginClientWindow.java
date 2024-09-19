@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.Socket;
+import java.util.List;
 
 public class LoginClientWindow extends JFrame {
 
@@ -77,20 +78,23 @@ public class LoginClientWindow extends JFrame {
                 // Проверяем успешный ли логин
                 if (echoPacket.getText().equals("Login successful!")) {
                     JOptionPane.showMessageDialog(this, "Login successful!");
-                
+    
+                    // Передаем список зарегистрированных пользователей и BufferedReader
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    List<String> registeredUsers = List.of("user1", "user2", "user3");
+    
                     // Открываем окно чата
-                    new ChatWindow(username, echoPacket.getCorrespondentId(), objectOutputStream);
+                    new ChatWindow(username, echoPacket.getCorrespondentId(), objectOutputStream, objectInputStream, registeredUsers);
                     dispose();  // Закрываем окно входа
                 } else {
                     JOptionPane.showMessageDialog(this, "Invalid username or password.");
-                }                
+                }
             }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
     
-
     private void sendPacket(Packet packet) {
         // Метод для отправки пакета на сервер через ObjectOutputStream
         try {

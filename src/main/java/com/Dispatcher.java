@@ -24,36 +24,29 @@ public class Dispatcher implements Runnable {
         System.out.println("Processing packet: " + p.getType());
         try {
             switch (p) {
-                case EchoPacket echoP -> {
-                    session.send(p);
-                }
-
-                case HiPacket hiP -> {
-                    var correspondent = Correspondent.findCorrespondent(hiP.login);  
-                    if (correspondent == null) {
-                        session.close();
-                        return;
-                    }
-                    session.correspondent = correspondent;
-                    correspondent.activeSession = session;
-                    System.out.println("Correspondent authorized, id: " + correspondent.id);
-                }
-
                 case MessagePacket mP -> {
                     if (session.correspondent == null) {
                         System.out.println("Non-authorized");
                         return;
                     }
-                    var correspondent = Correspondent.findCorrespondent(String.valueOf(mP.getCorrespondentId())); // Используем геттер
-                    mP.setCorrespondentId(session.correspondent.id); // Устанавливаем id отправителя
-                    if (correspondent != null && correspondent.activeSession != null) {
-                        System.out.println("Sending message to correspondent, id: " + correspondent.id);
-                        correspondent.activeSession.send(mP);
+    
+                    // Находим корреспондента по ID
+                    var correspondent = Correspondent.findCorrespondentById(mP.getCorrespondentId());
+    
+                    if (correspondent != null) {
+                        if (correspondent.activeSession != null) {
+                            // Устанавливаем отправителя
+                            mP.setCorrespondentId(session.correspondent.id);
+                            System.out.println("Sending message to correspondent, id: " + correspondent.id);
+                            correspondent.activeSession.send(mP);
+                        } else {
+                            System.out.println("Target correspondent is not connected, id: " + correspondent.id);
+                        }
                     } else {
-                        System.out.println("Target correspondent not connected, id: " + correspondent.id);
+                        System.out.println("Correspondent not found for id: " + mP.getCorrespondentId());
                     }
                 }
-
+    
                 case ListPacket emptyListP -> {
                     var filledListP = new ListPacket();
                     for (var c : Correspondent.listAll()) {
@@ -61,7 +54,7 @@ public class Dispatcher implements Runnable {
                     }
                     session.send(filledListP);
                 }
-
+    
                 case LoginPacket loginP -> {
                     String login = loginP.getUsername();  
                     String password = loginP.getPassword(); 
@@ -70,19 +63,26 @@ public class Dispatcher implements Runnable {
                     System.out.println("Received password: " + password);
                 
                     Correspondent correspondent = Correspondent.findCorrespondent(login);
-                
+    
                     if (correspondent != null && correspondent.checkPassword(password)) {
+                        // Если у пользователя уже есть активная сессия, закрываем ее
+                        if (correspondent.activeSession != null) {
+                            System.out.println("Closing previous session for " + login);
+                            correspondent.activeSession.close();
+                        }
+    
+                        // Устанавливаем новую активную сессию
                         correspondent.activeSession = session;
                         session.correspondent = correspondent;
-                        System.out.println("Login successful for: " + login);
-                        session.send(new EchoPacket("Login successful!", correspondent.getId()));  
+                        System.out.println("Login successful for: " + login + ". Active session: " + correspondent.activeSession);
+                        session.send(new EchoPacket("Login successful!", correspondent.getId()));
                     } else {
                         System.out.println("Login failed for: " + login);
                         session.send(new EchoPacket("Login failed!"));
                         session.close();
-                    }
+                    }                    
                 }                             
-
+    
                 default -> {
                     System.out.println("Unexpected packet type: " + p.getType());
                 }
@@ -92,4 +92,5 @@ public class Dispatcher implements Runnable {
             ex.printStackTrace();
         }
     }
+    
 }
