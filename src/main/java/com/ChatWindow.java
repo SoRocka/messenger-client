@@ -52,7 +52,7 @@ public class ChatWindow extends JFrame {
             if (!message.isEmpty()) {
                 sendMessage(message);
                 messageField.setText("");
-                addMessageToChat(currentCorrespondentId, "You: " + message);
+                // addMessageToChat(currentCorrespondentId, "You: " + message);
             }
         });
 
@@ -82,13 +82,22 @@ public class ChatWindow extends JFrame {
 
     private void sendMessage(String message) {
         try {
+            // Отправляем сообщение на сервер
             objectOutputStream.writeObject(new MessagePacket(currentCorrespondentId, message));
             objectOutputStream.flush();
+    
+            // Добавляем сообщение с "You: " в локальный чат
+            addMessageToChat(currentCorrespondentId, "You: " + message);
+            
+            // Обновляем отображение чата для текущего корреспондента
+            displayMessagesForUser(currentCorrespondentId);
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
+    
+    
     // Метод для добавления сообщения в чат
     private void addMessageToChat(int correspondentId, String message) {
         if (!messagesMap.containsKey(correspondentId)) {
@@ -117,9 +126,17 @@ public class ChatWindow extends JFrame {
                 while ((incomingMessage = objectInputStream.readObject()) != null) {
                     if (incomingMessage instanceof MessagePacket) {
                         MessagePacket messagePacket = (MessagePacket) incomingMessage;
-                        addMessageToChat(messagePacket.getCorrespondentId(), "Message from correspondent " + messagePacket.getCorrespondentId() + ": " + messagePacket.getMessage());
-                        if (messagePacket.getCorrespondentId() == currentCorrespondentId) {
-                            displayMessagesForUser(currentCorrespondentId);
+    
+                        // Проверяем, что сообщение не дублируется
+                        String receivedMessage = "Message from correspondent " + messagePacket.getCorrespondentId() + ": " + messagePacket.getMessage();
+                        List<String> currentMessages = messagesMap.get(messagePacket.getCorrespondentId());
+    
+                        // Если сообщение не было отправлено самим пользователем, добавляем его
+                        if (currentMessages == null || !currentMessages.contains(receivedMessage)) {
+                            addMessageToChat(messagePacket.getCorrespondentId(), receivedMessage);
+                            if (messagePacket.getCorrespondentId() == currentCorrespondentId) {
+                                displayMessagesForUser(currentCorrespondentId);
+                            }
                         }
                     } else {
                         System.out.println("Received unknown packet type");
@@ -131,6 +148,7 @@ public class ChatWindow extends JFrame {
             }
         }
     }
+    
 
     // Метод для получения ID пользователя по имени
     private int getUserIdByName(String username) {
