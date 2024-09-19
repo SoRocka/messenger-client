@@ -1,0 +1,13 @@
+com/ByePacket.class
+com/ListPacket$CorrespondentItem.class
+com/Packet.class
+com/MessagePacket.class
+com/Dispatcher.class
+com/MessengerServer.class
+com/HiPacket.class
+com/Event.class
+com/Correspondent.class
+com/ListPacket.class
+com/Session.class
+com/EchoPacket.class
+com/MessengerClientApplication.class
