@@ -8,6 +8,7 @@ com/Event.class
 com/EchoPacket.class
 com/Session.class
 com/ChatWindow.class
+com/ChatWindow$UserListCellRenderer.class
 com/ByePacket.class
 com/ListPacket$CorrespondentItem.class
 com/MessagePacket.class
@@ -19,3 +20,4 @@ com/Correspondent.class
 com/ListPacket.class
 com/LoginPacket.class
 com/MessengerClientApplication.class
+com/ChatWindow$2.class
