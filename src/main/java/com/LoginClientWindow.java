@@ -26,7 +26,8 @@ import com.ui.RoundedButtonUI;
         public LoginClientWindow() {
             // Настраиваем тему FlatLaf (темная тема)
             FlatDarkLaf.setup();
-    
+            UIManager.put("Button.paint", false);  // Отключаем стандартную отрисовку кнопок в FlatLaf
+
             // Настраиваем соединение с сервером
             try {
                 socket = new Socket("localhost", 10001);  // Подключаемся к серверу
@@ -55,14 +56,16 @@ import com.ui.RoundedButtonUI;
             };
     
             backgroundPanel.setLayout(null);
-    
+            
+            
             // Полупрозрачная панель для формы логина
             JPanel loginPanel = new JPanel();
             loginPanel.setLayout(new BoxLayout(loginPanel, BoxLayout.Y_AXIS));
-            loginPanel.setBackground(new Color(0, 0, 0, 75));  // Прозрачный черный фон (более светлый)
             loginPanel.setBounds(400, 120, 480, 500); // Устанавливаем размер и положение панели
             loginPanel.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
-    
+            loginPanel.setOpaque(true); 
+            loginPanel.setBackground(new Color(0, 0, 0, 75));  // Полупрозрачный черный фон
+
             // Логотип/название
             JLabel titleLabel = new JLabel("Вход");
             titleLabel.setForeground(Color.WHITE);

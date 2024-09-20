@@ -19,8 +19,16 @@ public class RoundedButtonUI extends BasicButtonUI {
         button.setOpaque(false);  // Отключаем стандартный фон
         button.setBorderPainted(false);  // Отключаем стандартную границу
         button.setFocusPainted(false);  // Отключаем фокус
-        button.setContentAreaFilled(false);  // Отключаем заливку
+        button.setContentAreaFilled(false);  // Отключаем стандартную заливку
         button.setRolloverEnabled(false);  // Отключаем эффект при наведении
+
+        // Устанавливаем кнопку в неизменяемое состояние
+        button.setModel(new DefaultButtonModel() {
+            @Override
+            public boolean isPressed() {
+                return false;  // Отключаем состояние "нажата"
+            }
+        });
     }
 
     @Override
@@ -28,11 +36,12 @@ public class RoundedButtonUI extends BasicButtonUI {
         Graphics2D g2 = (Graphics2D) g.create();
         AbstractButton b = (AbstractButton) c;
 
+        // Включаем сглаживание
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Устанавливаем цвет кнопки без зависимости от её состояния (при наведении или нажатии)
-        g2.setColor(new Color(0, 150, 136));  // Цвет кнопки
-        
+        // Устанавливаем цвет кнопки
+        g2.setColor(new Color(0, 150, 136));  // Основной цвет кнопки
+
         // Рисуем закругленную кнопку
         g2.fillRoundRect(0, 0, b.getWidth(), b.getHeight(), radius, radius);
 
@@ -45,8 +54,8 @@ public class RoundedButtonUI extends BasicButtonUI {
         g2.drawString(text, (b.getWidth() - textWidth) / 2, (b.getHeight() + textHeight) / 2 - 3);
 
         g2.dispose();
-    }
-
+    }    
+    
     @Override
     protected void paintFocus(Graphics g, AbstractButton b, Rectangle viewRect, Rectangle textRect, Rectangle iconRect) {
         // Отключаем фокус

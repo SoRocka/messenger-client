@@ -2,6 +2,9 @@ package com;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import javax.swing.*;
+
+import org.springframework.stereotype.Component;
+
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
@@ -19,7 +22,7 @@ public class ChatWindow extends JFrame {
     private int correspondentId;
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
-    
+
     private Map<String, Integer> userIdMap = new HashMap<>();
     private int currentCorrespondentId;
     private Map<Integer, ArrayList<String>> messagesMap = new HashMap<>();
@@ -39,7 +42,7 @@ public class ChatWindow extends JFrame {
         }
 
         setTitle("Telegram - " + username);
-        setSize(800, 600);
+        setSize(1280, 720);  // Размер окна согласно макету
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -51,26 +54,44 @@ public class ChatWindow extends JFrame {
     }
 
     private void initUI(List<String> registeredUsers) {
-        // Настройка панели чата
-        chatArea = new JTextPane();
+        // **Создание верхней панели с именем пользователя**
+        JPanel topPanel = new JPanel();
+        topPanel.setPreferredSize(new Dimension(970, 56));  // Размер верхней панели
+        topPanel.setBackground(new Color(25, 25, 25));  // Тёмный фон
+        JLabel usernameLabel = new JLabel(username);
+        usernameLabel.setForeground(Color.WHITE);
+        usernameLabel.setFont(new Font("SansSerif", Font.BOLD, 16));  // Стиль и размер текста
+        topPanel.add(usernameLabel);
+        add(topPanel, BorderLayout.NORTH);
+    
+        // **Настройка панели чата**
+        chatArea = new JTextPane() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                ImageIcon icon = new ImageIcon(getClass().getClassLoader().getResource("assets/chat-bg-pattern-dark.png"));
+                g.drawImage(icon.getImage(), 0, 0, getWidth(), getHeight(), this);
+            }
+        };
         chatArea.setEditable(false);
         chatArea.setBackground(new Color(32, 32, 32));
         chatArea.setForeground(Color.WHITE);
         chatArea.setFont(new Font("SansSerif", Font.PLAIN, 14));
         JScrollPane chatScrollPane = new JScrollPane(chatArea);
-
-        // Поле ввода сообщения
+    
+        // **Поле ввода сообщения**
         messageField = new JTextField();
         messageField.setBackground(new Color(48, 48, 48));
         messageField.setForeground(Color.WHITE);
         messageField.setCaretColor(Color.WHITE);
-
-        // Кнопка отправки сообщения
-        sendButton = new JButton("Send");
-        sendButton.setBackground(new Color(98, 0, 238));
-        sendButton.setForeground(Color.WHITE);
+    
+        // **Кнопка отправки сообщения с изображением**
+        sendButton = new JButton(new ImageIcon(getClass().getClassLoader().getResource("assets/Sign_in_circle.png")));
+        sendButton.setBackground(new Color(48, 48, 48));
         sendButton.setFocusPainted(false);
-
+        sendButton.setBorderPainted(false);  // Убираем границу
+        sendButton.setContentAreaFilled(false);  // Отключаем заливку
+    
         sendButton.addActionListener(e -> {
             String message = messageField.getText();
             if (!message.isEmpty()) {
@@ -78,14 +99,16 @@ public class ChatWindow extends JFrame {
                 messageField.setText("");
             }
         });
-
-        // Список пользователей
+    
+        // **Левое меню (список пользователей)**
         userList = new JList<>(registeredUsers.toArray(new String[0]));
-        userList.setBackground(new Color(25, 25, 25));
+        userList.setBackground(new Color(51, 51, 51));  // #333333 - цвет фона
         userList.setForeground(Color.WHITE);
-        userList.setSelectionBackground(new Color(98, 0, 238));
+        userList.setFixedCellHeight(60);  // Высота каждого элемента списка
+        userList.setSelectionBackground(new Color(98, 0, 238));  // Цвет выделения
         userList.setSelectionForeground(Color.WHITE);
-
+        userList.setFont(new Font("SansSerif", Font.PLAIN, 14));  // Шрифт для списка
+    
         userList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 String selectedUser = userList.getSelectedValue();
@@ -93,26 +116,45 @@ public class ChatWindow extends JFrame {
                 displayMessagesForUser(currentCorrespondentId);
             }
         });
-
+    
+        // **Добавление кружков для пользователей**
+        userList.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public java.awt.Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                ImageIcon icon = new ImageIcon(getClass().getClassLoader().getResource("assets/Ellipse_17.png"));
+                label.setIcon(icon);
+                label.setHorizontalTextPosition(JLabel.RIGHT);
+                return label;
+            }            
+        });
+    
         JScrollPane userScrollPane = new JScrollPane(userList);
-        userScrollPane.setPreferredSize(new Dimension(200, 0));
-
-        // Панель с разделением
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, userScrollPane, chatScrollPane);
-        splitPane.setDividerLocation(200);
-        splitPane.setBackground(new Color(32, 32, 32));
-        splitPane.setBorder(null);
-
-        // Добавляем компоненты в окно
+        userScrollPane.setPreferredSize(new Dimension(310, 720));  // Размер левого меню
+    
+        // **Панель для чата и ввода сообщения**
+        JPanel chatPanel = new JPanel(new BorderLayout());
+        chatPanel.add(chatScrollPane, BorderLayout.CENTER);  // Область чата
+    
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.add(messageField, BorderLayout.CENTER);
         bottomPanel.add(sendButton, BorderLayout.EAST);
         bottomPanel.setBackground(new Color(32, 32, 32));
-
+        chatPanel.add(bottomPanel, BorderLayout.SOUTH);  // Добавляем поле ввода в правую часть чата
+    
+        // Панель с разделением
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, userScrollPane, chatPanel);
+        splitPane.setDividerLocation(310);  // Фиксированное положение разделителя
+        splitPane.setEnabled(false);  // Отключаем возможность изменения положения разделителя
+        splitPane.setDividerSize(1);  // Толщина разделителя
+        splitPane.setBackground(Color.GRAY);  // Цвет разделителя
+        splitPane.setBorder(null);  // Убираем границы
+    
         add(splitPane, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
         setVisible(true);
     }
+    
+    
 
     private void sendMessage(String message) {
         try {
@@ -122,16 +164,15 @@ public class ChatWindow extends JFrame {
 
             // Добавляем сообщение с "You: " в локальный чат
             addMessageToChat(currentCorrespondentId, "You: " + message);
-            
+
             // Обновляем отображение чата для текущего корреспондента
             displayMessagesForUser(currentCorrespondentId);
-            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // Метод для добавления сообщения в чат
     private void addMessageToChat(int correspondentId, String message) {
         if (!messagesMap.containsKey(correspondentId)) {
             messagesMap.put(correspondentId, new ArrayList<>());
@@ -139,7 +180,6 @@ public class ChatWindow extends JFrame {
         messagesMap.get(correspondentId).add(message);
     }
 
-    // Метод для отображения сообщений для текущего пользователя
     private void displayMessagesForUser(int correspondentId) {
         chatArea.setText("");  // Очищаем чат
         List<String> messages = messagesMap.get(correspondentId);
@@ -150,7 +190,6 @@ public class ChatWindow extends JFrame {
         }
     }
 
-    // Метод для добавления сообщений в JTextPane
     private void appendToChat(String message) {
         try {
             chatArea.getDocument().insertString(chatArea.getDocument().getLength(), message + "\n", null);
@@ -159,7 +198,6 @@ public class ChatWindow extends JFrame {
         }
     }
 
-    // Внутренний класс для получения сообщений от сервера
     private class MessageReceiver implements Runnable {
         @Override
         public void run() {
@@ -169,11 +207,9 @@ public class ChatWindow extends JFrame {
                     if (incomingMessage instanceof MessagePacket) {
                         MessagePacket messagePacket = (MessagePacket) incomingMessage;
 
-                        // Проверяем, что сообщение не дублируется
                         String receivedMessage = "Message from correspondent " + messagePacket.getCorrespondentId() + ": " + messagePacket.getMessage();
                         List<String> currentMessages = messagesMap.get(messagePacket.getCorrespondentId());
 
-                        // Если сообщение не было отправлено самим пользователем, добавляем его
                         if (currentMessages == null || !currentMessages.contains(receivedMessage)) {
                             addMessageToChat(messagePacket.getCorrespondentId(), receivedMessage);
                             if (messagePacket.getCorrespondentId() == currentCorrespondentId) {
@@ -191,7 +227,6 @@ public class ChatWindow extends JFrame {
         }
     }
 
-    // Метод для получения ID пользователя по имени
     private int getUserIdByName(String username) {
         return userIdMap.getOrDefault(username, -1);
     }
