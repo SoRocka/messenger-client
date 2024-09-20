@@ -139,11 +139,12 @@ public class ChatWindow extends JFrame {
         // Добавляем компоненты в левую панель
         leftPanel.add(userScrollPane, BorderLayout.CENTER);
     
-        // Используем mainChatPanel для отображения сообщений
-        chatScrollPane = new JScrollPane(mainChatPanel);  
+        // Создаем JScrollPane для панели чата
+        chatScrollPane = new JScrollPane(mainChatPanel);
         chatScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         chatScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         chatScrollPane.setBorder(null);  // Убираем границы
+
     
         // **Инициализация компонентов отправки сообщений**
         messageField = new JTextField();  // Инициализация поля ввода сообщения
