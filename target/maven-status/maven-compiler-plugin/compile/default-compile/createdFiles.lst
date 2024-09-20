@@ -19,4 +19,3 @@ com/Correspondent.class
 com/ListPacket.class
 com/LoginPacket.class
 com/MessengerClientApplication.class
-com/ChatWindow$2.class
