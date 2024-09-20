@@ -1,6 +1,8 @@
 package com;
 
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 public class Dispatcher implements Runnable {
     private static final LinkedBlockingQueue<Event> packetQueue = new LinkedBlockingQueue<>();
@@ -54,34 +56,46 @@ public class Dispatcher implements Runnable {
                     }
                     session.send(filledListP);
                 }
-    
+                    
                 case LoginPacket loginP -> {
                     String login = loginP.getUsername();  
                     String password = loginP.getPassword(); 
-                
+
                     System.out.println("Received login: " + login);
                     System.out.println("Received password: " + password);
-                
+
                     Correspondent correspondent = Correspondent.findCorrespondent(login);
-    
+
                     if (correspondent != null && correspondent.checkPassword(password)) {
-                        // Если у пользователя уже есть активная сессия, закрываем ее
+                        // Если у пользователя уже есть активная сессия, закрываем её
                         if (correspondent.activeSession != null) {
                             System.out.println("Closing previous session for " + login);
                             correspondent.activeSession.close();
                         }
-    
+
                         // Устанавливаем новую активную сессию
                         correspondent.activeSession = session;
                         session.correspondent = correspondent;
                         System.out.println("Login successful for: " + login + ". Active session: " + correspondent.activeSession);
+                        
+                        // Отправляем подтверждение об успешной авторизации
                         session.send(new EchoPacket("Login successful!", correspondent.getId()));
+
+                        // Отправляем список пользователей клиенту
+                        List<String> users = Correspondent.listAll().stream()
+                                .map(c -> c.login)
+                                .collect(Collectors.toList());
+
+                        // Используем метод sendObject() из Session
+                        session.sendObject(users);
+
                     } else {
                         System.out.println("Login failed for: " + login);
                         session.send(new EchoPacket("Login failed!"));
                         session.close();
                     }                    
-                }                             
+                }
+                          
     
                 default -> {
                     System.out.println("Unexpected packet type: " + p.getType());

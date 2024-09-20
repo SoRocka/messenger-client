@@ -2,7 +2,9 @@ package com;
 
 import java.io.*;
 import java.net.*;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 public class Session extends Thread {
     private final Socket socket;
@@ -39,6 +41,16 @@ public class Session extends Thread {
             objectOutputStream.flush();
         } catch (IOException e) {
             System.out.println("Error sending packet: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void sendObject(Object obj) {
+        try {
+            objectOutputStream.writeObject(obj);
+            objectOutputStream.flush();
+        } catch (IOException e) {
+            System.out.println("Error sending object: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -104,7 +116,10 @@ public class Session extends Thread {
     
                 // Отправляем ответ об успешной авторизации с correspondentId
                 System.out.println("Login successful for user: " + login.getUsername());
-                sendPacket(new EchoPacket("Login successful!", correspondent.getId()));  // Эта строка добавлена
+                sendPacket(new EchoPacket("Login successful!", correspondent.getId()));  // Уведомляем об успешной авторизации
+    
+                // Отправляем список зарегистрированных пользователей после успешного логина
+                sendUserList();
     
                 return true;
             } else {
@@ -115,6 +130,22 @@ public class Session extends Thread {
         }
         return false;
     }
+
+    private void sendUserList() {
+        try {
+            List<String> userList = Correspondent.listAll().stream()
+                    .map(c -> c.login)
+                    .collect(Collectors.toList());
+            // Отправляем список пользователей клиенту
+            objectOutputStream.writeObject(userList);
+            objectOutputStream.flush();
+            System.out.println("Список пользователей отправлен клиенту.");
+        } catch (IOException e) {
+            System.out.println("Error sending user list: " + e.getMessage());
+            e.printStackTrace();
+        }
+    } 
+
     
     public void close() {
         try {

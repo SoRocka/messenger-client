@@ -5,8 +5,8 @@ com/ChatWindow$1.class
 com/MessengerServer.class
 com/ui/RoundedButtonUI$1.class
 com/Event.class
-com/Session.class
 com/EchoPacket.class
+com/Session.class
 com/ChatWindow.class
 com/ByePacket.class
 com/ListPacket$CorrespondentItem.class
