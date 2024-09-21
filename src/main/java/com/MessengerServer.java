@@ -6,9 +6,12 @@ public class MessengerServer {
 
     public static void startServer() {
         // Регистрация пользователей с паролями
-        Correspondent.registerCorrespondent(new Correspondent(1, "user1", "password1"));
-        Correspondent.registerCorrespondent(new Correspondent(2, "user2", "password2"));
+        Correspondent.registerCorrespondent(new Correspondent(1, "Полиночка", "<3"));
+        Correspondent.registerCorrespondent(new Correspondent(2, "Призрачный гонщик", ""));
         Correspondent.registerCorrespondent(new Correspondent(3, "Citadel", "3798"));
+        Correspondent.registerCorrespondent(new Correspondent(1, "User1", "password1"));
+        Correspondent.registerCorrespondent(new Correspondent(2, "Активный пользователь", "123456"));
+        Correspondent.registerCorrespondent(new Correspondent(3, "Кореш", ""));
 
         try (ServerSocket serverSocket = new ServerSocket(10001)) {
             new Thread(new Dispatcher()).start();

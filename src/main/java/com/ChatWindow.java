@@ -7,6 +7,11 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.StyledDocument;
 
 
+
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+
+
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -346,6 +351,19 @@ public ChatWindow(String username, int correspondentId, ObjectOutputStream objec
         messageField.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); // Добавляем отступы
         messageField.setPreferredSize(new Dimension(200, 50)); // Увеличиваем высоту поля
         messageField.setEnabled(false);  // Отключаем поле по умолчанию
+
+        // Обработчик нажатия Enter для отправки сообщений
+        messageField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    // Отправляем сообщение
+                    sendMessage(messageField.getText());
+                    messageField.setText("");  // Очищаем поле после отправки
+                }
+            }
+        });
+
 
         // Кнопка отправки сообщений
         sendButton = new JButton(new ImageIcon(getClass().getClassLoader().getResource("assets/Sign_in_circle.png")));

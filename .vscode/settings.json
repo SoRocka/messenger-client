@@ -1,4 +1,70 @@
 {
-    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.completion.importOrder": [
+        "java", "javax", "org", "com"
+    ],
+    "java.completion.importOrder.exclusions": [
+        "org.springframework.stereotype.Component"
+    ],
+    "java.completion.enableAutoImport": false,
+
+    "security.workspace.trust.untrustedFiles": "open",
+    "remote.SSH.remotePlatform": {
+        "192.168.0.103": "linux",
+        "192.168.0.101": "linux",
+        "192.168.0.102": "linux"
+    },
+    "git.confirmSync": false,
+    "git.enableSmartCommit": true,
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "explorer.confirmDelete": false,
+    "workbench.colorCustomizations": {},
+    "terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)",
+    "redhat.telemetry.enabled": true,
+    "git.autofetch": true,
+    "explorer.confirmDragAndDrop": false,
+    "terminal.integrated.enableMultiLinePasteWarning": false,
+    "terminal.integrated.automationProfile.windows": {},
+    "makefile.configureOnOpen": true,
+    "arduino.useArduinoCli": true,
+    "arduino.path": "/home/linuxbrew/.linuxbrew/bin",
+    "arduino.commandPath": "arduino-cli",
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell"
+        },
+        "Command Prompt": {
+            "path": [
+                "${env:windir}\\Sysnative\\cmd.exe",
+                "${env:windir}\\System32\\cmd.exe"
+            ],
+            "args": [],
+            "icon": "terminal-cmd"
+        },
+        "Git Bash": {
+            "source": "Git Bash"
+        },
+        "Ubuntu (WSL)": {
+            "path": "C:\\WINDOWS\\System32\\wsl.exe",
+            "args": [
+                "-d",
+                "Ubuntu"
+            ]
+        }
+    },
+    "javascript.suggest.autoImports": false,
+    "typescript.suggest.autoImports": false,
+    "java.completion.favoriteStaticMembers": [
+        
+        "org.junit.Assert.*",
+        "org.junit.Assume.*",
+        "org.junit.jupiter.api.Assertions.*",
+        "org.junit.jupiter.api.Assumptions.*",
+        "org.junit.jupiter.api.DynamicContainer.*",
+        "org.junit.jupiter.api.DynamicTest.*",
+        "org.mockito.Mockito.*",
+        "org.mockito.ArgumentMatchers.*",
+        "org.mockito.Answers.*"
+    ],
     "java.compile.nullAnalysis.mode": "automatic"
 }
