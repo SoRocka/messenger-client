@@ -3,10 +3,14 @@ package com;
 import com.formdev.flatlaf.FlatDarkLaf;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.BadLocationException;
+
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import java.awt.*;
 import java.io.*;
@@ -92,42 +96,51 @@ public class ChatWindow extends JFrame {
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setPreferredSize(new Dimension(970, 56));  // Размер верхней панели
         topPanel.setBackground(new Color(25, 25, 25));  // Тёмный фон
-    
-        // Инициализация headerUserLabel
+
+
+        // Инициализация headerUserLabel с вашим именем пользователя
         headerUserLabel = new JLabel(username);
         headerUserLabel.setForeground(new Color(40, 221, 141)); // Цвет текста
         headerUserLabel.setFont(new Font("SansSerif", Font.BOLD, 16));  // Стиль и размер текста
+        headerUserLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
-        // Инициализация иконки пользователя
+        // Инициализация иконки пользователя (кружочек)
         ImageIcon userIcon = new ImageIcon(getClass().getClassLoader().getResource("assets/Ellipse_17.png"));
         JLabel userIconLabel = new JLabel(userIcon);
-        
-        // Создание панели для иконки пользователя и имени
-        JPanel userInfoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        userInfoPanel.setOpaque(false); // Сделать панель прозрачной
-        userInfoPanel.add(userIconLabel);
-        userInfoPanel.add(headerUserLabel);
-        
-        // Добавление userInfoPanel в topPanel
-        topPanel.add(userInfoPanel, BorderLayout.WEST);
-    
+        userIconLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));  // 10px отступ сверху для иконки пользователя
+
+
         // Добавляем кнопку настроек с иконкой шестерёнки
         ImageIcon settingsIcon = new ImageIcon(getClass().getClassLoader().getResource("assets/Setting_alt_line.png"));
         JButton settingsButton = new JButton(settingsIcon);
         settingsButton.setFocusPainted(false);
         settingsButton.setBorderPainted(false);
         settingsButton.setContentAreaFilled(false);
-    
-        topPanel.add(settingsButton, BorderLayout.EAST); // Кнопка настроек справа
-    
-        // Добавление topPanel в фрейм
+
+        // Устанавливаем отступ (марджин) слева для шестерёнки
+        settingsButton.setBorder(BorderFactory.createEmptyBorder(7, 135, 0, 0));  // 10px отступ слева
+
+
+        // Создание панели для иконки пользователя, имени и шестерёнки с уменьшенным расстоянием между ними
+        JPanel userInfoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));  // 5 - горизонтальный отступ, 0 - вертикальный
+        userInfoPanel.setOpaque(false); // Сделать панель прозрачной
+        userInfoPanel.add(userIconLabel);   // Иконка пользователя
+        userInfoPanel.add(headerUserLabel); // Имя пользователя
+        userInfoPanel.add(settingsButton);  // Кнопка настроек
+
+        // Добавляем userInfoPanel (иконка, имя и настройки) в левую часть topPanel
+        topPanel.add(userInfoPanel, BorderLayout.WEST);
+
+
+        // Добавление topPanel в верхнюю часть окна
         add(topPanel, BorderLayout.NORTH);
-    
+
+
         // Левое меню: поиск и список пользователей
-        JPanel leftPanel = new JPanel(new BorderLayout());
+        JPanel leftPanel = new JPanel(new BorderLayout());  // Левое меню оставляем как leftPanel
         leftPanel.setPreferredSize(new Dimension(310, 720));  // Размер левого меню
         leftPanel.setBackground(new Color(51, 51, 51));  // #333333 - цвет фона
-    
+        
         // Поле поиска
         JTextField searchField = new JTextField();
         searchField.setPreferredSize(new Dimension(310, 30));
@@ -135,20 +148,22 @@ public class ChatWindow extends JFrame {
         searchField.setForeground(Color.WHITE);
         searchField.setCaretColor(Color.WHITE);
         searchField.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    
+
         leftPanel.add(searchField, BorderLayout.NORTH);
-    
+        
         // Список пользователей
-        userList = new JList<>(registeredUsers.toArray(new String[0]));
+        List<String> modifiedUsers = new ArrayList<>(registeredUsers);
+        userList = new JList<>(modifiedUsers.toArray(new String[0]));
         userList.setBackground(new Color(51, 51, 51));  // #333333 - цвет фона
         userList.setForeground(Color.WHITE);
         userList.setFixedCellHeight(60);  // Высота каждого элемента списка
         userList.setSelectionBackground(new Color(98, 0, 238));  // Цвет выделения
         userList.setSelectionForeground(Color.WHITE);
         userList.setFont(new Font("SansSerif", Font.PLAIN, 14));  // Шрифт для списка
-    
+            
         // Установка кастомного рендерера для списка пользователей
         userList.setCellRenderer(new UserListCellRenderer());
+
     
         // Добавление события выбора пользователя
         userList.addListSelectionListener(e -> {
@@ -173,6 +188,38 @@ public class ChatWindow extends JFrame {
             }
         });
 
+        // Добавляем DocumentListener для поиска
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                filterUserList();
+            }
+        
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                filterUserList();
+            }
+        
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                filterUserList();
+            }
+        
+            // Метод для фильтрации списка пользователей
+            private void filterUserList() {
+                String filter = searchField.getText().toLowerCase();
+                List<String> filteredUsers = new ArrayList<>();
+                
+                for (String user : registeredUsers) {
+                    if (user.toLowerCase().contains(filter)) {
+                        filteredUsers.add(user);
+                    }
+                }
+        
+                // Обновляем список пользователей
+                userList.setListData(filteredUsers.toArray(new String[0]));
+            }
+        });
         
         JScrollPane userScrollPane = new JScrollPane(userList);
         userScrollPane.setPreferredSize(new Dimension(310, 690));  // Высота
@@ -223,12 +270,17 @@ public class ChatWindow extends JFrame {
         userList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 String selectedUser = userList.getSelectedValue();
+
+                // Проверяем, выбран ли "Заметки", если да, то устанавливаем имя текущего пользователя
+                if (selectedUser.equals("Заметки")) {
+                    selectedUser = username;
+                }
+
                 currentCorrespondentId = getUserIdByName(selectedUser);
                 if (currentCorrespondentId == -1) {
                     System.out.println("Пользователь не найден: " + selectedUser);
                 } else {
                     System.out.println("Текущий корреспондент: " + selectedUser + ", ID: " + currentCorrespondentId);
-                    // headerUserLabel.setText(selectedUser);  // Обновляем имя в шапке
 
                     // Активируем поле и кнопку отправки сообщений
                     messageField.setEnabled(true);
@@ -239,6 +291,7 @@ public class ChatWindow extends JFrame {
                 }
             }
         });
+
 
         // Добавляем панель чата и панель для отправки сообщений в интерфейс
         JPanel chatPanel = new JPanel(new BorderLayout());

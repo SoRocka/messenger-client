@@ -4,11 +4,13 @@ com/Dispatcher.class
 com/LoginClientWindow$3.class
 com/ChatWindow$1.class
 com/MessengerServer.class
+com/utils/UserUtils.class
 com/ui/RoundedBorderUI.class
 com/ui/RoundedButtonUI$1.class
 com/Event.class
 com/EchoPacket.class
 com/Session.class
+com/ChatWindow$3.class
 com/ChatWindow.class
 com/ChatWindow$UserListCellRenderer.class
 com/ByePacket.class

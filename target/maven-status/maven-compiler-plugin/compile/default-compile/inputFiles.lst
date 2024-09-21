@@ -1,6 +1,7 @@
 /mnt/e/Repositories/messenger-client/src/main/java/com/Session.java
 /mnt/e/Repositories/messenger-client/src/main/java/com/Dispatcher.java
 /mnt/e/Repositories/messenger-client/src/main/java/com/MessagePacket.java
+/mnt/e/Repositories/messenger-client/src/main/java/com/utils/UserUtils.java
 /mnt/e/Repositories/messenger-client/src/main/java/com/HiPacket.java
 /mnt/e/Repositories/messenger-client/src/main/java/com/Packet.java
 /mnt/e/Repositories/messenger-client/src/main/java/com/ui/RoundedBorderUI.java
