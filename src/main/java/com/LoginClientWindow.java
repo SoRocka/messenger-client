@@ -4,8 +4,6 @@ import com.formdev.flatlaf.FlatDarkLaf;
 import javax.swing.*;
 import javax.swing.border.*;
 
-import org.springframework.stereotype.Component;
-
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -301,9 +299,9 @@ import java.awt.event.FocusEvent;
         private void handleLogin(ActionEvent e) {
             errorLabel.setText(" ");  // Очищаем ошибку при новой попытке
         
-            if (!connected) {
-                errorLabel.setText("Не удалось подключиться к серверу.");
-                return;
+            // Проверяем состояние соединения перед каждой попыткой авторизации
+            if (!connected || socket.isClosed()) {
+                reconnectToServer();  // Повторная попытка подключения, если соединение было разорвано
             }
         
             String username = usernameField.getText();
@@ -314,18 +312,20 @@ import java.awt.event.FocusEvent;
                 LoginPacket loginPacket = new LoginPacket(username, password);
                 sendPacket(loginPacket);
         
+                // Ожидаем ответа от сервера
                 Object response = objectInputStream.readObject();
+        
                 if (response instanceof EchoPacket) {
                     EchoPacket echoPacket = (EchoPacket) response;
                     if (echoPacket.getText().equals("Login successful!")) {
                         errorLabel.setText(" ");
                         JOptionPane.showMessageDialog(this, "Login successful!");
-                        
+        
                         // Ожидаем получения списка пользователей от сервера
                         @SuppressWarnings("unchecked")
                         List<String> users = (List<String>) objectInputStream.readObject();
                         System.out.println("Получен список пользователей: " + users);
-                        
+        
                         // Открываем окно чата и закрываем окно логина
                         SwingUtilities.invokeLater(() -> {
                             new ChatWindow(username, echoPacket.getCorrespondentId(), objectOutputStream, objectInputStream, users);
@@ -342,6 +342,10 @@ import java.awt.event.FocusEvent;
                     usernameField.setText("");  // Очищаем поле логина
                     passwordField.setText("");  // Очищаем поле пароля
                 }
+            } catch (EOFException ex) {
+                errorLabel.setText("Соединение разорвано. Попробуйте снова.");
+                ex.printStackTrace();
+                reconnectToServer();  // Повторная попытка подключения после разрыва
             } catch (IOException | ClassNotFoundException ex) {
                 errorLabel.setText("Ошибка отправки данных на сервер.");
                 ex.printStackTrace();
@@ -350,9 +354,25 @@ import java.awt.event.FocusEvent;
             }
         }
         
-        
-        
+        private void reconnectToServer() {
+            try {
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();  // Закрываем старый сокет, если он открыт
+                }
+                socket = new Socket("localhost", 10001);
+                objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                objectInputStream = new ObjectInputStream(socket.getInputStream());
+                connected = true;
+                errorLabel.setText(" ");
+                System.out.println("Успешно подключились к серверу!");
+            } catch (IOException ex) {
+                errorLabel.setText("Ошибка подключения к серверу.");
+                ex.printStackTrace();
+            }
+        }
 
+
+        
         private void sendPacket(Packet packet) {
             // Метод для отправки пакета на сервер через ObjectOutputStream
             try {
