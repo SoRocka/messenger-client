@@ -295,13 +295,29 @@ import java.awt.event.FocusEvent;
             return backgroundPanel;
         }
         
+        private void closeSocket() {
+            try {
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();
+                }
+                if (objectInputStream != null) {
+                    objectInputStream.close();
+                }
+                if (objectOutputStream != null) {
+                    objectOutputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
+
 
         private void handleLogin(ActionEvent e) {
             errorLabel.setText(" ");  // Очищаем ошибку при новой попытке
         
-            // Проверяем состояние соединения перед каждой попыткой авторизации
             if (!connected || socket.isClosed()) {
-                reconnectToServer();  // Повторная попытка подключения, если соединение было разорвано
+                reconnectToServer();  // Переподключение, если соединение было закрыто
             }
         
             String username = usernameField.getText();
@@ -312,9 +328,7 @@ import java.awt.event.FocusEvent;
                 LoginPacket loginPacket = new LoginPacket(username, password);
                 sendPacket(loginPacket);
         
-                // Ожидаем ответа от сервера
                 Object response = objectInputStream.readObject();
-        
                 if (response instanceof EchoPacket) {
                     EchoPacket echoPacket = (EchoPacket) response;
                     if (echoPacket.getText().equals("Login successful!")) {
@@ -336,43 +350,40 @@ import java.awt.event.FocusEvent;
                         errorLabel.setText("Неправильный логин или пароль.");
                         usernameField.setText("");  // Очищаем поле логина
                         passwordField.setText("");  // Очищаем поле пароля
+        
+                        // Закрываем старое соединение, чтобы создать новое при следующей попытке
+                        closeSocket();
                     }
                 } else {
                     errorLabel.setText("Ошибка: Некорректный ответ от сервера.");
-                    usernameField.setText("");  // Очищаем поле логина
-                    passwordField.setText("");  // Очищаем поле пароля
+                    closeSocket();
                 }
-            } catch (EOFException ex) {
-                errorLabel.setText("Соединение разорвано. Попробуйте снова.");
-                ex.printStackTrace();
-                reconnectToServer();  // Повторная попытка подключения после разрыва
             } catch (IOException | ClassNotFoundException ex) {
                 errorLabel.setText("Ошибка отправки данных на сервер.");
                 ex.printStackTrace();
-                usernameField.setText("");  // Очищаем поле логина
-                passwordField.setText("");  // Очищаем поле пароля
+                closeSocket();
             }
         }
         
+
+        
         private void reconnectToServer() {
+            closeSocket();  // Закрываем старое соединение, если оно есть
+        
             try {
-                if (socket != null && !socket.isClosed()) {
-                    socket.close();  // Закрываем старый сокет, если он открыт
-                }
-                socket = new Socket("localhost", 10001);
+                socket = new Socket("localhost", 10001);  // Новый сокет
                 objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
                 objectInputStream = new ObjectInputStream(socket.getInputStream());
                 connected = true;
-                errorLabel.setText(" ");
-                System.out.println("Успешно подключились к серверу!");
-            } catch (IOException ex) {
-                errorLabel.setText("Ошибка подключения к серверу.");
-                ex.printStackTrace();
+                System.out.println("Успешно переподключились к серверу!");
+            } catch (IOException e) {
+                e.printStackTrace();
+                errorLabel.setText("Не удалось подключиться к серверу.");
             }
         }
-
-
         
+
+
         private void sendPacket(Packet packet) {
             // Метод для отправки пакета на сервер через ObjectOutputStream
             try {
