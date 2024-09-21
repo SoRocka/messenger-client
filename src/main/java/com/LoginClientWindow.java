@@ -14,7 +14,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.ui.RoundedButtonUI;
+import com.ui.RoundedBorderUI;
 
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
 
     public class LoginClientWindow extends JFrame {
@@ -32,23 +35,27 @@ import com.ui.RoundedButtonUI;
         public LoginClientWindow() {
             FlatDarkLaf.setup();
             UIManager.put("Button.paint", false);  // Отключаем стандартную отрисовку кнопок в FlatLaf
-
+        
             // Устанавливаем параметры окна
             setTitle("Вход - Telegram");
             setSize(1280, 720); 
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             setLocationRelativeTo(null);
             setResizable(false);
-
+        
             JPanel backgroundPanel = createBackgroundPanel();
             JPanel loginPanel = createLoginPanel();
-
+        
             backgroundPanel.add(loginPanel);
             add(backgroundPanel);
-
+        
+            // Устанавливаем фокус на поле логина по умолчанию
+            usernameField.requestFocusInWindow();
+        
             connectToServer();  // Запускаем попытки подключения
             setVisible(true);
         }
+        
 
 
         private void connectToServer() {
@@ -83,30 +90,94 @@ import com.ui.RoundedButtonUI;
             return titleLabel;
         }
         
+
         private JTextField createUsernameField() {
             JTextField usernameField = new JTextField();
-            usernameField.setMaximumSize(new Dimension(400, 40));
+            usernameField.setMaximumSize(new Dimension(400, 50));  // Увеличиваем высоту
             usernameField.setBackground(new Color(48, 48, 48));
             usernameField.setForeground(Color.WHITE);
             usernameField.setCaretColor(Color.WHITE);
-            usernameField.setFont(new Font("SansSerif", Font.PLAIN, 16));
-            usernameField.setToolTipText("Имя пользователя");
-            usernameField.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(146, 146, 146))); 
+            
+            // Используем шрифт Roboto
+            usernameField.setFont(new Font("Roboto", Font.PLAIN, 16));
+        
+            // Плейсхолдер серого цвета
+            usernameField.setText("логин");
+            usernameField.setForeground(Color.GRAY);
+        
+            // Устанавливаем внутренние отступы через Border
+            usernameField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(146, 146, 146)),  // Нижнее подчёркивание
+                BorderFactory.createEmptyBorder(10, 15, 10, 15)  // Внутренние отступы
+            ));
+        
+            usernameField.addFocusListener(new FocusAdapter() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                    if (usernameField.getText().equals("логин")) {
+                        usernameField.setText("");
+                        usernameField.setForeground(Color.WHITE);
+                    }
+                }
+        
+                @Override
+                public void focusLost(FocusEvent e) {
+                    if (usernameField.getText().isEmpty()) {
+                        usernameField.setForeground(Color.GRAY);
+                        usernameField.setText("логин");
+                    }
+                }
+            });
+        
             return usernameField;
         }
         
+
+        
         private JPasswordField createPasswordField() {
             JPasswordField passwordField = new JPasswordField();
-            passwordField.setMaximumSize(new Dimension(400, 40));
+            passwordField.setMaximumSize(new Dimension(400, 50));  // Увеличиваем высоту
             passwordField.setBackground(new Color(48, 48, 48));
             passwordField.setForeground(Color.WHITE);
             passwordField.setCaretColor(Color.WHITE);
-            passwordField.setFont(new Font("SansSerif", Font.PLAIN, 16));
-            passwordField.setToolTipText("Пароль");
-            passwordField.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(146, 146, 146))); 
+            
+            // Шрифт Roboto для поля пароля
+            passwordField.setFont(new Font("Roboto", Font.PLAIN, 16));
+        
+            // Плейсхолдер серого цвета
+            passwordField.setEchoChar((char) 0);  // Отключаем отображение символов пароля
+            passwordField.setText("пароль");
+            passwordField.setForeground(Color.GRAY);
+        
+            // Устанавливаем внутренние отступы через Border
+            passwordField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(146, 146, 146)),  // Нижнее подчёркивание
+                BorderFactory.createEmptyBorder(10, 15, 10, 15)  // Внутренние отступы
+            ));
+        
+            passwordField.addFocusListener(new FocusAdapter() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                    if (new String(passwordField.getPassword()).equals("пароль")) {
+                        passwordField.setText("");
+                        passwordField.setForeground(Color.WHITE);
+                        passwordField.setEchoChar('●');  // Включаем символы пароля
+                    }
+                }
+        
+                @Override
+                public void focusLost(FocusEvent e) {
+                    if (new String(passwordField.getPassword()).isEmpty()) {
+                        passwordField.setEchoChar((char) 0);  // Отключаем символы пароля
+                        passwordField.setForeground(Color.GRAY);
+                        passwordField.setText("пароль");
+                    }
+                }
+            });
+        
             return passwordField;
         }
-        
+
         private JLabel createRegisterLabel() {
             JLabel registerLabel = new JLabel("Нет аккаунта?");
             registerLabel.setForeground(new Color(180, 180, 180));
@@ -139,18 +210,33 @@ import com.ui.RoundedButtonUI;
             loginPanel.add(Box.createRigidArea(new Dimension(0, 20)));
             loginPanel.add(passwordField = createPasswordField());
             loginPanel.add(Box.createRigidArea(new Dimension(0, 30)));
-            loginPanel.add(createLoginButton());
-            loginPanel.add(Box.createRigidArea(new Dimension(0, 40)));
-            loginPanel.add(createRegisterLabel());
+            
+            // Добавляем пустое пространство, чтобы кнопка и метка были внизу
+            loginPanel.add(Box.createVerticalGlue());
+            
+            // Панель для кнопки авторизации и метки "Нет аккаунта?"
+            JPanel bottomPanel = new JPanel();
+            bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
+            bottomPanel.setOpaque(false);  // Прозрачный фон для нижней панели
+            
+            // Кнопка авторизации
+            bottomPanel.add(createLoginButton());
+            bottomPanel.add(Box.createRigidArea(new Dimension(0, 40)));  // Отступ
+            
+            // Метка "Нет аккаунта?"
+            bottomPanel.add(createRegisterLabel());
             
             // Ошибки
             errorLabel = createErrorLabel();
-            loginPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-            loginPanel.add(errorLabel);
+            bottomPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            bottomPanel.add(errorLabel);
+        
+            // Добавляем нижнюю панель в основную панель
+            loginPanel.add(bottomPanel);
         
             return loginPanel;
         }
-        
+             
         private JButton createLoginButton() {
             JButton loginButton = new JButton("Авторизоваться");
             loginButton.setUI(new RoundedButtonUI(50));
