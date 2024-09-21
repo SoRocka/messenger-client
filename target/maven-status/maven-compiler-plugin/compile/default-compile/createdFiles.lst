@@ -17,6 +17,7 @@ com/ChatWindow.class
 com/ChatWindow$UserListCellRenderer.class
 com/ByePacket.class
 com/LoginClientWindow$4.class
+com/ChatWindow$7.class
 com/ListPacket$CorrespondentItem.class
 com/MessagePacket.class
 com/ChatWindow$MessageReceiver.class

@@ -6,6 +6,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.StyledDocument;
 
+
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -184,12 +185,19 @@ public ChatWindow(String username, int correspondentId, ObjectOutputStream objec
         // Добавление topPanel в верхнюю часть окна
         add(topPanel, BorderLayout.NORTH);
 
-
         // Левое меню: поиск и список пользователей
-        JPanel leftPanel = new JPanel(new BorderLayout());  // Левое меню оставляем как leftPanel
+        JPanel leftPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                ImageIcon icon = new ImageIcon(getClass().getClassLoader().getResource("assets/pattern.png"));
+                Image scaledImage = icon.getImage().getScaledInstance(getWidth(), getHeight(), Image.SCALE_SMOOTH);
+                g.drawImage(scaledImage, 0, 0, getWidth(), getHeight(), this);
+            }
+        };
+
         leftPanel.setPreferredSize(new Dimension(310, 720));  // Размер левого меню
-        // Фон левого меню
-        leftPanel.setBackground(sidebarColor);
+        leftPanel.setBackground(sidebarColor); // Фон панели, если изображение не загрузится
 
         
         // Поле поиска
@@ -254,24 +262,28 @@ public ChatWindow(String username, int correspondentId, ObjectOutputStream objec
         userList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 String selectedUser = userList.getSelectedValue();
+                
+                // Проверяем, если выбраны "Заметки", то используем реальное имя пользователя
+                if ("Заметки".equals(selectedUser)) {
+                    selectedUser = username;  // Заменяем на текущее имя пользователя
+                }
+                
                 currentCorrespondentId = getUserIdByName(selectedUser);
                 if (currentCorrespondentId == -1) {
                     System.out.println("Пользователь не найден: " + selectedUser);
                 } else {
                     System.out.println("Текущий корреспондент: " + selectedUser + ", ID: " + currentCorrespondentId);
-                    
-                    // // Обновляем имя текущего пользователя около кружочка
-                    // updateCurrentUserLabel(selectedUser);
-        
+
                     // Активируем поле и кнопку отправки сообщений
                     messageField.setEnabled(true);
                     sendButton.setEnabled(true);
-        
+
                     // Обновляем сообщения для выбранного пользователя
                     displayMessagesForUser(currentCorrespondentId);
                 }
             }
         });
+
 
         // Добавляем DocumentListener для поиска
         searchField.getDocument().addDocumentListener(new DocumentListener() {
