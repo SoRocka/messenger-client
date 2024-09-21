@@ -15,8 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import java.awt.Component;
-
 public class ChatWindow extends JFrame {
 
     private JTextPane chatArea;
@@ -72,6 +70,10 @@ public class ChatWindow extends JFrame {
         new Thread(new MessageReceiver()).start();
     }
     
+    private void updateCurrentUserLabel(String username) {
+        headerUserLabel.setText(username);  // Обновляем имя в шапке
+    }
+
     private void initUI(List<String> registeredUsers) {
         // Инициализация главной панели чата с фоновым изображением
         mainChatPanel = new JPanel() {
@@ -92,20 +94,20 @@ public class ChatWindow extends JFrame {
         topPanel.setBackground(new Color(25, 25, 25));  // Тёмный фон
     
         // Инициализация headerUserLabel
-        headerUserLabel = new JLabel();
+        headerUserLabel = new JLabel(username);
         headerUserLabel.setForeground(new Color(40, 221, 141)); // Цвет текста
         headerUserLabel.setFont(new Font("SansSerif", Font.BOLD, 16));  // Стиль и размер текста
-    
+        
         // Инициализация иконки пользователя
         ImageIcon userIcon = new ImageIcon(getClass().getClassLoader().getResource("assets/Ellipse_17.png"));
         JLabel userIconLabel = new JLabel(userIcon);
-    
+        
         // Создание панели для иконки пользователя и имени
         JPanel userInfoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         userInfoPanel.setOpaque(false); // Сделать панель прозрачной
         userInfoPanel.add(userIconLabel);
         userInfoPanel.add(headerUserLabel);
-    
+        
         // Добавление userInfoPanel в topPanel
         topPanel.add(userInfoPanel, BorderLayout.WEST);
     
@@ -157,12 +159,21 @@ public class ChatWindow extends JFrame {
                     System.out.println("Пользователь не найден: " + selectedUser);
                 } else {
                     System.out.println("Текущий корреспондент: " + selectedUser + ", ID: " + currentCorrespondentId);
-                    headerUserLabel.setText(selectedUser); // Обновляем имя в шапке
+                    
+                    // // Обновляем имя текущего пользователя около кружочка
+                    // updateCurrentUserLabel(selectedUser);
+        
+                    // Активируем поле и кнопку отправки сообщений
+                    messageField.setEnabled(true);
+                    sendButton.setEnabled(true);
+        
+                    // Обновляем сообщения для выбранного пользователя
+                    displayMessagesForUser(currentCorrespondentId);
                 }
-                displayMessagesForUser(currentCorrespondentId);
             }
         });
-    
+
+        
         JScrollPane userScrollPane = new JScrollPane(userList);
         userScrollPane.setPreferredSize(new Dimension(310, 690));  // Высота
     
@@ -184,12 +195,16 @@ public class ChatWindow extends JFrame {
         messageField.setForeground(Color.WHITE);
         messageField.setCaretColor(Color.WHITE);
         messageField.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); // Добавляем отступы
-    
+        messageField.setEnabled(false);  // Отключаем поле ввода сообщений по умолчанию
+
+        // Кнопка отправки сообщений
         sendButton = new JButton(new ImageIcon(getClass().getClassLoader().getResource("assets/Sign_in_circle.png")));
         sendButton.setFocusPainted(false);
         sendButton.setBorderPainted(false);
         sendButton.setContentAreaFilled(false);
-    
+        sendButton.setEnabled(false);  // Отключаем кнопку отправки сообщений по умолчанию
+
+        // Логика отправки сообщений
         sendButton.addActionListener(e -> {
             String message = messageField.getText();
             if (!message.isEmpty()) {
@@ -197,27 +212,45 @@ public class ChatWindow extends JFrame {
                 messageField.setText("");
             }
         });
-    
-        // Панель для отправки сообщений
+
+        // Нижняя панель для отправки сообщений
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.add(messageField, BorderLayout.CENTER);
         bottomPanel.add(sendButton, BorderLayout.EAST);
         bottomPanel.setBackground(new Color(32, 32, 32));
-    
-        // Панель для чата и ввода сообщения
+
+        // Добавление событий для выбора пользователя
+        userList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                String selectedUser = userList.getSelectedValue();
+                currentCorrespondentId = getUserIdByName(selectedUser);
+                if (currentCorrespondentId == -1) {
+                    System.out.println("Пользователь не найден: " + selectedUser);
+                } else {
+                    System.out.println("Текущий корреспондент: " + selectedUser + ", ID: " + currentCorrespondentId);
+                    // headerUserLabel.setText(selectedUser);  // Обновляем имя в шапке
+
+                    // Активируем поле и кнопку отправки сообщений
+                    messageField.setEnabled(true);
+                    sendButton.setEnabled(true);
+
+                    // Обновляем сообщения для выбранного пользователя
+                    displayMessagesForUser(currentCorrespondentId);
+                }
+            }
+        });
+
+        // Добавляем панель чата и панель для отправки сообщений в интерфейс
         JPanel chatPanel = new JPanel(new BorderLayout());
-        chatPanel.add(chatScrollPane, BorderLayout.CENTER);  // Область чата
+        chatPanel.add(chatScrollPane, BorderLayout.CENTER);  // Панель чата
         chatPanel.add(bottomPanel, BorderLayout.SOUTH);  // Поле ввода сообщения
-    
-        // Панель с разделением
+
+        // Разделяем левое меню и чат
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, chatPanel);
-        splitPane.setDividerLocation(310);  // Фиксированное положение разделителя
-        splitPane.setEnabled(false);  // Отключаем возможность изменения положения разделителя
-        splitPane.setDividerSize(1);  // Толщина разделителя
-        splitPane.setBackground(Color.GRAY);  // Цвет разделителя
-        splitPane.setBorder(null);  // Убираем границы
-    
-        // Добавляем компоненты в окно
+        splitPane.setDividerLocation(310);  // Положение разделителя
+        splitPane.setEnabled(false);  // Отключаем изменение разделителя
+        splitPane.setDividerSize(1);  // Размер разделителя
+
         add(splitPane, BorderLayout.CENTER);
         setVisible(true);
     }

@@ -28,7 +28,6 @@ import java.awt.event.FocusEvent;
         private ObjectInputStream objectInputStream;
         private ObjectOutputStream objectOutputStream;
         private JLabel errorLabel;
-        private List<String> registeredUsers;
         private boolean connected = false;
 
 
@@ -272,18 +271,8 @@ import java.awt.event.FocusEvent;
             errorLabel.setText(" ");  // Очищаем ошибку при новой попытке
         
             if (!connected) {
-                // Попытка подключения к серверу
-                try {
-                    socket = new Socket("localhost", 10001);
-                    objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-                    objectInputStream = new ObjectInputStream(socket.getInputStream());
-                    connected = true;
-                    System.out.println("Соединение с сервером установлено.");
-                } catch (IOException ex) {
-                    errorLabel.setText("Не удалось подключиться к серверу.");
-                    ex.printStackTrace();
-                    return;  // Выходим из метода, если подключение не удалось
-                }
+                errorLabel.setText("Не удалось подключиться к серверу.");
+                return;
             }
         
             String username = usernameField.getText();
@@ -300,28 +289,36 @@ import java.awt.event.FocusEvent;
                     if (echoPacket.getText().equals("Login successful!")) {
                         errorLabel.setText(" ");
                         JOptionPane.showMessageDialog(this, "Login successful!");
-        
+                        
                         // Ожидаем получения списка пользователей от сервера
                         @SuppressWarnings("unchecked")
-                        List<String> users = (List<String>) objectInputStream.readObject();  // Получаем список пользователей
+                        List<String> users = (List<String>) objectInputStream.readObject();
                         System.out.println("Получен список пользователей: " + users);
-        
-                        // Передаём список пользователей в окно чата
+                        
+                        // Открываем окно чата и закрываем окно логина
                         SwingUtilities.invokeLater(() -> {
                             new ChatWindow(username, echoPacket.getCorrespondentId(), objectOutputStream, objectInputStream, users);
                             dispose();  // Закрываем окно авторизации
                         });
                     } else {
+                        // Неправильный логин или пароль - очищаем оба поля
                         errorLabel.setText("Неправильный логин или пароль.");
+                        usernameField.setText("");  // Очищаем поле логина
+                        passwordField.setText("");  // Очищаем поле пароля
                     }
                 } else {
                     errorLabel.setText("Ошибка: Некорректный ответ от сервера.");
+                    usernameField.setText("");  // Очищаем поле логина
+                    passwordField.setText("");  // Очищаем поле пароля
                 }
             } catch (IOException | ClassNotFoundException ex) {
                 errorLabel.setText("Ошибка отправки данных на сервер.");
                 ex.printStackTrace();
+                usernameField.setText("");  // Очищаем поле логина
+                passwordField.setText("");  // Очищаем поле пароля
             }
         }
+        
         
         
 
