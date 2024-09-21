@@ -1,8 +1,10 @@
 com/ui/RoundedButtonUI.class
 com/Packet.class
 com/Dispatcher.class
+com/LoginClientWindow$3.class
 com/ChatWindow$1.class
 com/MessengerServer.class
+com/ui/RoundedBorderUI.class
 com/ui/RoundedButtonUI$1.class
 com/Event.class
 com/EchoPacket.class
@@ -13,6 +15,7 @@ com/ByePacket.class
 com/ListPacket$CorrespondentItem.class
 com/MessagePacket.class
 com/ChatWindow$MessageReceiver.class
+com/LoginClientWindow$2.class
 com/HiPacket.class
 com/LoginClientWindow$1.class
 com/LoginClientWindow.class
