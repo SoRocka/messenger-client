@@ -3,6 +3,7 @@ com/Packet.class
 com/Dispatcher.class
 com/LoginClientWindow$3.class
 com/ChatWindow$1.class
+com/LoginClientWindow$5.class
 com/MessengerServer.class
 com/utils/UserUtils.class
 com/ui/RoundedBorderUI.class
@@ -14,10 +15,12 @@ com/ChatWindow$3.class
 com/ChatWindow.class
 com/ChatWindow$UserListCellRenderer.class
 com/ByePacket.class
+com/LoginClientWindow$4.class
 com/ListPacket$CorrespondentItem.class
 com/MessagePacket.class
 com/ChatWindow$MessageReceiver.class
 com/LoginClientWindow$2.class
+com/ChatWindow$4.class
 com/HiPacket.class
 com/LoginClientWindow$1.class
 com/LoginClientWindow.class

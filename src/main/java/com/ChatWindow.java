@@ -5,6 +5,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.StyledDocument;
+
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.BadLocationException;
@@ -61,7 +62,11 @@ public class ChatWindow extends JFrame {
     
         // Применяем темную тему FlatLaf
         FlatDarkLaf.setup();
-    
+        
+        // Убираем стандартные рамки окна
+        setUndecorated(true); // Отключает заголовок и рамки
+
+        
         setTitle("Telegram - " + username);
         setSize(1280, 720);  // Размер окна согласно макету
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -79,6 +84,14 @@ public class ChatWindow extends JFrame {
     }
 
     private void initUI(List<String> registeredUsers) {
+        // Цвета для интерфейса (основываемся на палитре Telegram)
+        Color backgroundColor = new Color(35, 39, 42);  // Темный фон
+        Color sidebarColor = new Color(30, 33, 36);  // Цвет для левого меню
+        Color selectedUserColor = new Color(72, 130, 180);  // Цвет для выделения активного пользователя
+        Color searchFieldColor = new Color(48, 52, 55);  // Фон для поля поиска
+
+
+
         // Инициализация главной панели чата с фоновым изображением
         mainChatPanel = new JPanel() {
             @Override
@@ -139,32 +152,59 @@ public class ChatWindow extends JFrame {
         // Левое меню: поиск и список пользователей
         JPanel leftPanel = new JPanel(new BorderLayout());  // Левое меню оставляем как leftPanel
         leftPanel.setPreferredSize(new Dimension(310, 720));  // Размер левого меню
-        leftPanel.setBackground(new Color(51, 51, 51));  // #333333 - цвет фона
+        // Фон левого меню
+        leftPanel.setBackground(sidebarColor);
+
         
         // Поле поиска
         JTextField searchField = new JTextField();
         searchField.setPreferredSize(new Dimension(310, 30));
-        searchField.setBackground(new Color(41, 41, 41));
+        searchField.setBackground(searchFieldColor);
         searchField.setForeground(Color.WHITE);
         searchField.setCaretColor(Color.WHITE);
-        searchField.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        searchField.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Скругляем и добавляем отступы
 
         leftPanel.add(searchField, BorderLayout.NORTH);
         
+                
         // Список пользователей
         List<String> modifiedUsers = new ArrayList<>(registeredUsers);
+
+        // Заменяем имя текущего пользователя на "Заметки" сразу после загрузки
+        for (int i = 0; i < modifiedUsers.size(); i++) {
+            if (modifiedUsers.get(i).equals(username)) {
+                modifiedUsers.set(i, "Заметки");
+                break;
+            }
+        }
+
         userList = new JList<>(modifiedUsers.toArray(new String[0]));
-        userList.setBackground(new Color(51, 51, 51));  // #333333 - цвет фона
+        userList.setBackground(sidebarColor);
         userList.setForeground(Color.WHITE);
         userList.setFixedCellHeight(60);  // Высота каждого элемента списка
-        userList.setSelectionBackground(new Color(98, 0, 238));  // Цвет выделения
+        userList.setSelectionBackground(selectedUserColor);  // Цвет для выделения активного пользователя
         userList.setSelectionForeground(Color.WHITE);
         userList.setFont(new Font("SansSerif", Font.PLAIN, 14));  // Шрифт для списка
             
-        // Установка кастомного рендерера для списка пользователей
-        userList.setCellRenderer(new UserListCellRenderer());
+        // Список пользователей рендерим в стиле Telegram
+        userList.setCellRenderer(new UserListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                        boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (isSelected) {
+                    label.setBackground(selectedUserColor); // Меняем цвет фона при выделении
+                } else {
+                    label.setBackground(sidebarColor); // Цвет для обычных пользователей
+                }
+                label.setOpaque(true);  // Устанавливаем прозрачность
+                label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Отступы
+                return label;
+            }
+        });
+        
 
-    
+
         // Добавление события выбора пользователя
         userList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -212,10 +252,15 @@ public class ChatWindow extends JFrame {
                 
                 for (String user : registeredUsers) {
                     if (user.toLowerCase().contains(filter)) {
-                        filteredUsers.add(user);
+                        // Если ввод совпадает с именем текущего пользователя, добавляем "Заметки"
+                        if (user.equalsIgnoreCase(username)) {
+                            filteredUsers.add(0, "Заметки"); // Добавляем "Заметки" первыми
+                        } else {
+                            filteredUsers.add(user);
+                        }
                     }
                 }
-        
+            
                 // Обновляем список пользователей
                 userList.setListData(filteredUsers.toArray(new String[0]));
             }
@@ -235,14 +280,15 @@ public class ChatWindow extends JFrame {
         chatScrollPane.setBorder(null);  // Убираем границы
         chatScrollPane.getViewport().setOpaque(false); // Прозрачность области просмотра
         chatScrollPane.setOpaque(false); // Прозрачность самого JScrollPane
-    
-        // Инициализация компонентов отправки сообщений
+            
+        // Поле для ввода сообщений
         messageField = new JTextField();
-        messageField.setBackground(new Color(48, 48, 48));
+        messageField.setBackground(new Color(48, 48, 48)); // Цвет поля
         messageField.setForeground(Color.WHITE);
         messageField.setCaretColor(Color.WHITE);
         messageField.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); // Добавляем отступы
-        messageField.setEnabled(false);  // Отключаем поле ввода сообщений по умолчанию
+        messageField.setPreferredSize(new Dimension(200, 50)); // Увеличиваем высоту поля
+        messageField.setEnabled(false);  // Отключаем поле по умолчанию
 
         // Кнопка отправки сообщений
         sendButton = new JButton(new ImageIcon(getClass().getClassLoader().getResource("assets/Sign_in_circle.png")));
@@ -250,6 +296,11 @@ public class ChatWindow extends JFrame {
         sendButton.setBorderPainted(false);
         sendButton.setContentAreaFilled(false);
         sendButton.setEnabled(false);  // Отключаем кнопку отправки сообщений по умолчанию
+
+        // Теперь можно применить настройки для кнопки после ее инициализации
+        sendButton.setBackground(new Color(72, 130, 180));  // Темно-синий цвет для кнопки отправки
+
+        
 
         // Логика отправки сообщений
         sendButton.addActionListener(e -> {
@@ -265,33 +316,6 @@ public class ChatWindow extends JFrame {
         bottomPanel.add(messageField, BorderLayout.CENTER);
         bottomPanel.add(sendButton, BorderLayout.EAST);
         bottomPanel.setBackground(new Color(32, 32, 32));
-
-        // Добавление событий для выбора пользователя
-        userList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                String selectedUser = userList.getSelectedValue();
-
-                // Проверяем, выбран ли "Заметки", если да, то устанавливаем имя текущего пользователя
-                if (selectedUser.equals("Заметки")) {
-                    selectedUser = username;
-                }
-
-                currentCorrespondentId = getUserIdByName(selectedUser);
-                if (currentCorrespondentId == -1) {
-                    System.out.println("Пользователь не найден: " + selectedUser);
-                } else {
-                    System.out.println("Текущий корреспондент: " + selectedUser + ", ID: " + currentCorrespondentId);
-
-                    // Активируем поле и кнопку отправки сообщений
-                    messageField.setEnabled(true);
-                    sendButton.setEnabled(true);
-
-                    // Обновляем сообщения для выбранного пользователя
-                    displayMessagesForUser(currentCorrespondentId);
-                }
-            }
-        });
-
 
         // Добавляем панель чата и панель для отправки сообщений в интерфейс
         JPanel chatPanel = new JPanel(new BorderLayout());
@@ -460,19 +484,19 @@ public class ChatWindow extends JFrame {
     // Класс для кастомного отображения списка пользователей
     private class UserListCellRenderer extends DefaultListCellRenderer {
         private ImageIcon userIcon;
-    
+
         public UserListCellRenderer() {
             userIcon = new ImageIcon(getClass().getClassLoader().getResource("assets/Ellipse_17.png"));
         }
-    
+
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                      boolean isSelected, boolean cellHasFocus) {
+                                                    boolean isSelected, boolean cellHasFocus) {
             JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             label.setIcon(userIcon);
             label.setHorizontalTextPosition(JLabel.RIGHT);
             label.setIconTextGap(10); // Расстояние между иконкой и текстом
-            return label;
+            return label;  // Возвращаем JLabel, который является java.awt.Component
         }
     }
 

@@ -7,6 +7,8 @@ import javax.swing.border.*;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.net.Socket;
@@ -29,33 +31,62 @@ import java.awt.event.FocusEvent;
         private ObjectOutputStream objectOutputStream;
         private JLabel errorLabel;
         private boolean connected = false;
-
+        private Point initialClick;  // Для хранения начальной точки клика
 
         public LoginClientWindow() {
             FlatDarkLaf.setup();
-            UIManager.put("Button.paint", false);  // Отключаем стандартную отрисовку кнопок в FlatLaf
-        
+
+            // Убираем стандартные рамки окна
+            setUndecorated(true); // Отключает заголовок и рамки
+
+            // Добавляем обработчик для перетаскивания окна мышкой
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    initialClick = e.getPoint(); // Запоминаем начальное положение курсора
+                }
+            });
+
+            addMouseMotionListener(new MouseAdapter() {
+                @Override
+                public void mouseDragged(MouseEvent e) {
+                    // Получаем текущее положение окна
+                    int thisX = getLocation().x;
+                    int thisY = getLocation().y;
+
+                    // Вычисляем смещение курсора
+                    int xMoved = e.getX() - initialClick.x;
+                    int yMoved = e.getY() - initialClick.y;
+
+                    // Новая позиция окна
+                    int X = thisX + xMoved;
+                    int Y = thisY + yMoved;
+
+                    // Устанавливаем новое положение окна
+                    setLocation(X, Y);
+                }
+            });
+
             // Устанавливаем параметры окна
             setTitle("Вход - Telegram");
-            setSize(1280, 720); 
+            setSize(1280, 720);
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             setLocationRelativeTo(null);
             setResizable(false);
-        
+
             JPanel backgroundPanel = createBackgroundPanel();
             JPanel loginPanel = createLoginPanel();
-        
+
             backgroundPanel.add(loginPanel);
             add(backgroundPanel);
-        
+
             // Устанавливаем фокус на поле логина по умолчанию
             usernameField.requestFocusInWindow();
-        
-            connectToServer();  // Запускаем попытки подключения
-            setVisible(true);
-        }
-        
 
+            connectToServer();  // Запускаем попытки подключения
+        setVisible(true);
+    }
+        
 
         private void connectToServer() {
             new Thread(() -> {
