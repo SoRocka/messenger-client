@@ -6,11 +6,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.StyledDocument;
 
-// import org.springframework.stereotype.Component;
-
-// import org.springframework.stereotype.Component;
-
-// import org.springframework.stereotype.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
@@ -46,45 +44,77 @@ public class ChatWindow extends JFrame {
     private JScrollPane chatScrollPane;
     private int userId;
 
+    private int mouseX;
+    private int mouseY;
 
-    public ChatWindow(String username, int correspondentId, ObjectOutputStream objectOutputStream, ObjectInputStream objectInputStream, List<String> registeredUsers) {
-        this.username = username;
-        this.objectOutputStream = objectOutputStream;
-        this.objectInputStream = objectInputStream;
-    
-        // Заполняем карту соответствий имен пользователей и их ID
-        for (int i = 0; i < registeredUsers.size(); i++) {
-            userIdMap.put(registeredUsers.get(i), i + 1);
-        }
-    
-        // Получаем userId на основе username
-        this.userId = getUserIdByName(username);
-        if (this.userId == -1) {
-            System.out.println("Ошибка: Не удалось найти userId для пользователя " + username);
-            // Дополнительная обработка ошибки
-        }
-    
-        this.correspondentId = correspondentId;
-    
-        // Применяем темную тему FlatLaf
-        FlatDarkLaf.setup();
-        
-        // Убираем стандартные рамки окна
-        setUndecorated(true); // Отключает заголовок и рамки
 
-        
-        setTitle("Telegram - " + username);
-        setSize(1280, 720);  // Размер окна согласно макету
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-    
-        // Инициализация пользовательского интерфейса
-        initUI(registeredUsers);
-    
-        // Запускаем поток для получения сообщений от сервера
-        new Thread(new MessageReceiver()).start();
+
+public ChatWindow(String username, int correspondentId, ObjectOutputStream objectOutputStream, ObjectInputStream objectInputStream, List<String> registeredUsers) {
+    this.username = username;
+    this.objectOutputStream = objectOutputStream;
+    this.objectInputStream = objectInputStream;
+
+    // Заполняем карту соответствий имен пользователей и их ID
+    for (int i = 0; i < registeredUsers.size(); i++) {
+        userIdMap.put(registeredUsers.get(i), i + 1);
     }
-    
+
+    // Получаем userId на основе username
+    this.userId = getUserIdByName(username);
+    if (this.userId == -1) {
+        System.out.println("Ошибка: Не удалось найти userId для пользователя " + username);
+        // Дополнительная обработка ошибки
+    }
+
+    this.correspondentId = correspondentId;
+
+    // Применяем темную тему FlatLaf
+    FlatDarkLaf.setup();
+
+    // Убираем стандартные рамки окна
+    setUndecorated(true); // Отключает заголовок и рамки
+
+    // Добавляем перетаскивание окна
+    addWindowDragFunctionality();
+
+    setTitle("Telegram - " + username);
+    setSize(1280, 720);  // Размер окна согласно макету
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    setLocationRelativeTo(null);
+
+    // Инициализация пользовательского интерфейса
+    initUI(registeredUsers);
+
+    // Запускаем поток для получения сообщений от сервера
+    new Thread(new MessageReceiver()).start();
+}
+
+
+    // Метод для добавления перетаскивания окна
+    private void addWindowDragFunctionality() {
+        // Добавляем обработчик для перетаскивания окна
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                // Запоминаем координаты мыши при нажатии
+                mouseX = e.getX();
+                mouseY = e.getY();
+            }
+        });
+
+        addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                // Получаем текущее положение окна
+                int x = e.getXOnScreen();
+                int y = e.getYOnScreen();
+                // Перемещаем окно относительно позиции мыши
+                setLocation(x - mouseX, y - mouseY);
+            }
+        });
+    }
+
+
     private void updateCurrentUserLabel(String username) {
         headerUserLabel.setText(username);  // Обновляем имя в шапке
     }
