@@ -6,6 +6,12 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.StyledDocument;
 
+// import org.springframework.stereotype.Component;
+
+// import org.springframework.stereotype.Component;
+
+// import org.springframework.stereotype.Component;
+
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.BadLocationException;
@@ -192,15 +198,24 @@ public class ChatWindow extends JFrame {
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                         boolean isSelected, boolean cellHasFocus) {
                 JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (isSelected) {
-                    label.setBackground(selectedUserColor); // Меняем цвет фона при выделении
+                
+                // Условие для установки специальной иконки для "Заметки"
+                if ("Заметки".equals(value)) {
+                    // Загружаем иконку для "Заметки" и изменяем ее размер на 50x50
+                    ImageIcon bookmarkIcon = new ImageIcon(getClass().getClassLoader().getResource("assets/icons8-bookmark.png"));
+                    Image scaledImage = bookmarkIcon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
+                    label.setIcon(new ImageIcon(scaledImage));
                 } else {
-                    label.setBackground(sidebarColor); // Цвет для обычных пользователей
+                    label.setIcon(userIcon); // Иконка для остальных пользователей
                 }
-                label.setOpaque(true);  // Устанавливаем прозрачность
-                label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Отступы
+                
+                label.setOpaque(true); // Это нужно, чтобы фон стал видимым
+
+                label.setHorizontalTextPosition(JLabel.RIGHT);
+                label.setIconTextGap(10); // Расстояние между иконкой и текстом
                 return label;
             }
+
         });
         
 
