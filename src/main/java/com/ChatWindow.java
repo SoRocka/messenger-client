@@ -7,6 +7,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.StyledDocument;
 
 
+
 import java.awt.*;
 import javax.swing.border.Border;
 
@@ -224,14 +225,14 @@ public ChatWindow(String username, int correspondentId, ObjectOutputStream objec
                 
         // Поле для поиска
         JTextField searchField = new JTextField();
-        searchField.setPreferredSize(new Dimension(250, 35));  // Задаем размер поля
-        searchField.setBackground(new Color(60, 60, 60));  // Темный фон поля
+        searchField.setPreferredSize(new Dimension(300, 35));  // Задаем размер поля
+        // searchField.setBackground(new Color(60, 60, 60));  // Темный фон поля
         searchField.setForeground(Color.WHITE);  // Белый цвет текста
         searchField.setCaretColor(Color.WHITE);  // Белый цвет каретки ввода
 
         // Убираем бордер
         searchField.setBorder(BorderFactory.createCompoundBorder(
-            new RoundedBorderUI(50),  // Кастомный бордер с радиусом 50
+            BorderFactory.createEmptyBorder(),  // Убираем внешний бордер (0 пикселей)
             BorderFactory.createEmptyBorder(5, 15, 5, 15)  // Внутренние отступы
         ));
         
@@ -337,6 +338,8 @@ public ChatWindow(String username, int correspondentId, ObjectOutputStream objec
                 }
             }
         });
+
+        
 
 
         // Добавляем DocumentListener для поиска
