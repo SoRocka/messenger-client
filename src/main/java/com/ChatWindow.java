@@ -43,6 +43,15 @@ public class ChatWindow extends JFrame {
         this.objectOutputStream = objectOutputStream;
         this.objectInputStream = objectInputStream;
     
+        // Удаляем текущего пользователя из списка
+        registeredUsers.remove(username);
+        
+        // Добавляем текущего пользователя с именем "Заметки" в начало списка
+        registeredUsers.add(0, "Заметки");
+
+        // Сортируем список пользователей, чтобы "Заметки" всегда были первыми, а остальные по алфавиту
+        registeredUsers.subList(1, registeredUsers.size()).sort(String::compareToIgnoreCase);
+        
         // Заполняем карту соответствий имен пользователей и их ID
         for (int i = 0; i < registeredUsers.size(); i++) {
             userIdMap.put(registeredUsers.get(i), i + 1);
@@ -78,13 +87,14 @@ public class ChatWindow extends JFrame {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                ImageIcon icon = new ImageIcon(getClass().getClassLoader().getResource("assets/chat-bg-pattern-dark.png"));
-                // Ограничьте высоту, например, размером панели или окна, чтобы фон не прокручивался
-                g.drawImage(icon.getImage(), 0, 0, getWidth(), mainChatPanel.getHeight(), this);
-            }    
+    
+                // Загружаем SVG-паттерн
+                ImageIcon icon = new ImageIcon(getClass().getClassLoader().getResource("assets/pattern.svg"));
+                g.drawImage(icon.getImage(), 0, 0, getWidth(), getHeight(), this);
+            }
         };
         mainChatPanel.setLayout(new BoxLayout(mainChatPanel, BoxLayout.Y_AXIS));
-        mainChatPanel.setOpaque(false); // Устанавливаем панель как прозрачную, чтобы фон отображался правильно
+        mainChatPanel.setOpaque(false); // Устанавливаем панель как прозрачную, чтобы фон отображался правильно    
     
         // Инициализация верхней панели
         JPanel topPanel = new JPanel(new BorderLayout());
@@ -271,24 +281,29 @@ public class ChatWindow extends JFrame {
         });
     }
     
+    // Логика добавления сообщений
     private void sendMessage(String message) {
         try {
-            // Отправляем сообщение на сервер
-            objectOutputStream.writeObject(new MessagePacket(currentCorrespondentId, message));
-            objectOutputStream.flush();
-    
+            // Если текущий корреспондент - это "Заметки", отправляем сообщение самому себе
+            if ("Заметки".equals(getUserNameById(currentCorrespondentId))) {
+                addMessageToChat(currentCorrespondentId, "You: " + message);
+                displayMessagesForUser(currentCorrespondentId);
+            } else {
+                // Отправляем сообщение корреспонденту
+                objectOutputStream.writeObject(new MessagePacket(currentCorrespondentId, message));
+                objectOutputStream.flush();
+
+                addMessageToChat(currentCorrespondentId, "You: " + message);
+                displayMessagesForUser(currentCorrespondentId);
+            }
+
             System.out.println("Сообщение отправлено: " + message);
-    
-            // Немедленно добавляем сообщение в локальный чат
-            addMessageToChat(currentCorrespondentId, "You: " + message);
-    
-            // Обновляем интерфейс чата для отображения сообщения
-            displayMessagesForUser(currentCorrespondentId);
-    
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }    
+    }
+
     
     private void receiveMessage(int correspondentId, String message) {
         // Если сообщение отправлено самим себе, просто игнорируем его
@@ -374,21 +389,32 @@ public class ChatWindow extends JFrame {
     // Класс для кастомного отображения списка пользователей
     private class UserListCellRenderer extends DefaultListCellRenderer {
         private ImageIcon userIcon;
+        private ImageIcon bookmarkIcon;  // Иконка для "Заметок"
     
         public UserListCellRenderer() {
             userIcon = new ImageIcon(getClass().getClassLoader().getResource("assets/Ellipse_17.png"));
+            bookmarkIcon = new ImageIcon(getClass().getClassLoader().getResource("assets/icons8-bookmark.png")); // Загрузка PNG иконки
         }
     
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                       boolean isSelected, boolean cellHasFocus) {
             JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            label.setIcon(userIcon);
+            
+            // Если пользователь "Заметки", то используем bookmarkIcon
+            if ("Заметки".equals(value)) {
+                label.setIcon(bookmarkIcon);
+            } else {
+                label.setIcon(userIcon);
+            }
+    
             label.setHorizontalTextPosition(JLabel.RIGHT);
             label.setIconTextGap(10); // Расстояние между иконкой и текстом
             return label;
         }
     }
+    
+    
 
     // Метод для получения ID пользователя по имени
     private int getUserIdByName(String username) {
