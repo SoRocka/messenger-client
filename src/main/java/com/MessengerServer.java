@@ -9,9 +9,9 @@ public class MessengerServer {
         Correspondent.registerCorrespondent(new Correspondent(1, "Полиночка", "<3"));
         Correspondent.registerCorrespondent(new Correspondent(2, "Призрачный гонщик", ""));
         Correspondent.registerCorrespondent(new Correspondent(3, "Citadel", "3798"));
-        Correspondent.registerCorrespondent(new Correspondent(1, "User1", "password1"));
-        Correspondent.registerCorrespondent(new Correspondent(2, "Активный пользователь", "123456"));
-        Correspondent.registerCorrespondent(new Correspondent(3, "Кореш", ""));
+        Correspondent.registerCorrespondent(new Correspondent(4, "user1", "password1"));
+        Correspondent.registerCorrespondent(new Correspondent(5, "Активный пользователь", "123456"));
+        Correspondent.registerCorrespondent(new Correspondent(6, "Кореш", ""));
 
         try (ServerSocket serverSocket = new ServerSocket(10001)) {
             new Thread(new Dispatcher()).start();

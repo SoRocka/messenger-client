@@ -7,6 +7,12 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.StyledDocument;
 
 
+import java.awt.*;
+import javax.swing.border.Border;
+
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -23,12 +29,15 @@ import javax.swing.text.BadLocationException;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+
+import com.ui.RoundedBorderUI;
+
 
 public class ChatWindow extends JFrame {
 
@@ -190,28 +199,64 @@ public ChatWindow(String username, int correspondentId, ObjectOutputStream objec
         // Добавление topPanel в верхнюю часть окна
         add(topPanel, BorderLayout.NORTH);
 
+
         // Левое меню: поиск и список пользователей
         JPanel leftPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
+                // Загружаем изображение для меню
                 ImageIcon icon = new ImageIcon(getClass().getClassLoader().getResource("assets/pattern.png"));
-                Image scaledImage = icon.getImage().getScaledInstance(getWidth(), getHeight(), Image.SCALE_SMOOTH);
-                g.drawImage(scaledImage, 0, 0, getWidth(), getHeight(), this);
+                if (icon.getImage() != null) {
+                    // Пропорционально масштабируем изображение по ширине и высоте панели
+                    Image scaledImage = icon.getImage().getScaledInstance(getWidth(), getHeight(), Image.SCALE_SMOOTH);
+                    g.drawImage(scaledImage, 0, 0, getWidth(), getHeight(), this);
+                }
             }
         };
+        leftPanel.setPreferredSize(new Dimension(310, 720));  // Размер панели
+        leftPanel.setBackground(new Color(48, 48, 48));  // Цвет фона на случай, если изображение не загрузится
 
-        leftPanel.setPreferredSize(new Dimension(310, 720));  // Размер левого меню
+        leftPanel.setMinimumSize(new Dimension(310, 0));  // Минимальная высота, чтобы она не была зафиксирована
+        // leftPanel.setMaximumSize(new Dimension(310, Integer.MAX_VALUE));  // Максимальная высота для адаптации
+
         leftPanel.setBackground(sidebarColor); // Фон панели, если изображение не загрузится
-
-        
-        // Поле поиска
+                
+        // Поле для поиска
         JTextField searchField = new JTextField();
-        searchField.setPreferredSize(new Dimension(310, 30));
-        searchField.setBackground(searchFieldColor);
-        searchField.setForeground(Color.WHITE);
-        searchField.setCaretColor(Color.WHITE);
-        searchField.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Скругляем и добавляем отступы
+        searchField.setPreferredSize(new Dimension(250, 35));  // Задаем размер поля
+        searchField.setBackground(new Color(60, 60, 60));  // Темный фон поля
+        searchField.setForeground(Color.WHITE);  // Белый цвет текста
+        searchField.setCaretColor(Color.WHITE);  // Белый цвет каретки ввода
+
+        // Убираем бордер
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+            new RoundedBorderUI(50),  // Кастомный бордер с радиусом 50
+            BorderFactory.createEmptyBorder(5, 15, 5, 15)  // Внутренние отступы
+        ));
+        
+        // Добавляем подсказку (placeholder) для поля поиска
+        searchField.setText("Поиск...");
+        searchField.setForeground(Color.GRAY);  // Цвет текста для подсказки
+
+        searchField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (searchField.getText().equals("Поиск...")) {
+                    searchField.setText("");
+                    searchField.setForeground(Color.WHITE);
+                }
+            }
+
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (searchField.getText().isEmpty()) {
+                    searchField.setForeground(Color.GRAY);
+                    searchField.setText("Поиск...");
+                }
+            }
+        });
 
         leftPanel.add(searchField, BorderLayout.NORTH);
         
@@ -234,7 +279,11 @@ public ChatWindow(String username, int correspondentId, ObjectOutputStream objec
         userList.setSelectionBackground(selectedUserColor);  // Цвет для выделения активного пользователя
         userList.setSelectionForeground(Color.WHITE);
         userList.setFont(new Font("SansSerif", Font.PLAIN, 14));  // Шрифт для списка
-            
+                    
+        // Убираем бордер для JList
+        userList.setBorder(BorderFactory.createEmptyBorder());
+
+
         // Список пользователей рендерим в стиле Telegram
         userList.setCellRenderer(new UserListCellRenderer() {
             @Override
@@ -313,6 +362,7 @@ public ChatWindow(String username, int correspondentId, ObjectOutputStream objec
                 List<String> filteredUsers = new ArrayList<>();
                 
                 for (String user : registeredUsers) {
+                    System.out.println("User: " + user);
                     if (user.toLowerCase().contains(filter)) {
                         // Если ввод совпадает с именем текущего пользователя, добавляем "Заметки"
                         if (user.equalsIgnoreCase(username)) {
@@ -322,6 +372,8 @@ public ChatWindow(String username, int correspondentId, ObjectOutputStream objec
                         }
                     }
                 }
+                System.out.println("Filtered Users: " + filteredUsers);
+
             
                 // Обновляем список пользователей
                 userList.setListData(filteredUsers.toArray(new String[0]));
@@ -329,7 +381,8 @@ public ChatWindow(String username, int correspondentId, ObjectOutputStream objec
         });
         
         JScrollPane userScrollPane = new JScrollPane(userList);
-        userScrollPane.setPreferredSize(new Dimension(310, 690));  // Высота
+        userScrollPane.setPreferredSize(new Dimension(310, 690));  // Размеры остаются те же
+        userScrollPane.setBorder(BorderFactory.createEmptyBorder());  // Убираем бордер
     
         // Добавляем компоненты в левую панель
         leftPanel.add(userScrollPane, BorderLayout.CENTER);

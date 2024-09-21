@@ -22,6 +22,7 @@ com/ChatWindow$7.class
 com/ListPacket$CorrespondentItem.class
 com/MessagePacket.class
 com/ChatWindow$MessageReceiver.class
+com/ChatWindow$9.class
 com/LoginClientWindow$2.class
 com/ChatWindow$4.class
 com/HiPacket.class
