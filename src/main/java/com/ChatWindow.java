@@ -9,6 +9,7 @@ import javax.swing.text.StyledDocument;
 
 
 import java.awt.*;
+
 import javax.swing.border.Border;
 
 import java.awt.event.FocusAdapter;
@@ -46,8 +47,10 @@ public class ChatWindow extends JFrame {
     private JTextField messageField;
     private JButton sendButton;
     private JList<String> userList;
+    private Timer searchTimer;
     private String username;
     private int correspondentId;
+    
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
     private JLabel headerUserLabel;
