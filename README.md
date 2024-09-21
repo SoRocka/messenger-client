@@ -1,2 +1,29 @@
-# messenger-client
-A Java-based messaging server and client application, utilizing Spring Boot for backend operations and handling various message packet types. The project showcases network communication with support for multiple user sessions, message dispatching, and real-time data processing.
+# Тестовое задание
+
+## Как запустить
+
+1. Запустите сервер:
+
+    ```bash
+    ./serveRun.sh
+    ```
+
+2. Подождите, пока Maven запустит сервер.
+3. После успешного запуска сервера, запустите клиент:
+
+    ```bash
+    ./clientRun.sh
+    ```
+
+> **Важно**: если запустить клиент, пока сервер ещё не запустился — крашнет.
+
+## Логины и пароли для входа
+
+- **Полиночка**: `<3`
+- **Призрачный гонщик**: `пароль не установлен`
+- **Citadel**: `3798`
+- **user1**: `password1`
+- **Активный пользователь**: `123456`
+- **Кореш**: `пароль не установлен`
+
+Удачного тестирования! :)
